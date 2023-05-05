@@ -11,6 +11,13 @@ DB_NAME = os.environ.get("DB_NAME")
 DB_USER = os.environ.get("DB_USER")
 DB_PASS = os.environ.get("DB_PASS")
 
+# Database configs for tests
+DB_HOST_TEST = os.environ.get("DB_HOST_TEST")
+DB_NAME_TEST = os.environ.get("DB_NAME_TEST")
+DB_PASS_TEST = os.environ.get("DB_PASS_TEST")
+DB_PORT_TEST = os.environ.get("DB_PORT_TEST")
+DB_USER_TEST = os.environ.get("DB_USER_TEST")
+
 # Auth and Manager secrets
 SECRET_AUTH = os.environ.get("AUTH")
 SECRET_MANAGER = os.environ.get("MANAGER")
