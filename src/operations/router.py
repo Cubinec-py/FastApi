@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database import get_async_session
-from src.operations.models import operation
-from src.operations.schemas import OperationCreate
+from database import get_async_session
+from operations.models import operation
+from operations.schemas import OperationCreate
 
 router = APIRouter(
     prefix='/api/operations',
