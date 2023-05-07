@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from starlette.background import BackgroundTasks
 
 from auth.base_config import current_user
-from tasks import send_mail
+from tasks.tasks import send_mail
 
 
 router = APIRouter(
