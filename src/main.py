@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-from fastapi_cache.decorator import cache
 from fastapi.middleware.cors import CORSMiddleware
 
 from redis import asyncio as aioredis
@@ -12,13 +11,14 @@ from auth.schemas import UserRead, UserCreate
 from operations.router import router as router_operation
 from tasks.router import router as router_task
 from chat.router import router as router_chat
+from pages.router import router as router_page
 
 app = FastAPI(
     title="Trading App"
 )
 
 origins = [
-    "http://localhost:8080",
+    "http://127.0.0.1:8000",
 ]
 
 app.add_middleware(
@@ -45,6 +45,7 @@ app.include_router(
 app.include_router(router_operation)
 app.include_router(router_task)
 app.include_router(router_chat)
+app.include_router(router_page)
 
 
 @app.on_event("startup")

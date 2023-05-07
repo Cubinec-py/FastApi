@@ -1,7 +1,6 @@
 from typing import List
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
-from fastapi.responses import HTMLResponse
 from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +9,7 @@ from chat.schemas import MessageModel
 from database import async_session_maker, get_async_session
 
 router = APIRouter(
-    prefix="/api/chat",
+    prefix="/chat",
     tags=['Chat']
 )
 
