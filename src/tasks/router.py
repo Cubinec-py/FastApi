@@ -3,10 +3,12 @@ from starlette.background import BackgroundTasks
 
 from auth.base_config import current_user
 from tasks.tasks import send_mail
+from auth.base_config import current_active_user
 
 
 router = APIRouter(
     prefix='/api/tasks',
+    dependencies=[Depends(current_active_user)],
     tags=['Tasks'],
 )
 

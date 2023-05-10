@@ -1,11 +1,12 @@
 from fastapi_users import FastAPIUsers
-from fastapi_users.authentication import CookieTransport, JWTStrategy, AuthenticationBackend
+from fastapi_users.authentication import JWTStrategy, AuthenticationBackend, BearerTransport
+from starlette.requests import Request
 
 from auth.manager import get_user_manager
 from auth.models import User
 from config import SECRET_AUTH
 
-cookie_transport = CookieTransport(cookie_name='auth', cookie_max_age=3600)
+bearer_transport = BearerTransport(tokenUrl="/api/auth/jwt/login")
 
 SECRET = SECRET_AUTH
 
@@ -16,7 +17,7 @@ def get_jwt_strategy() -> JWTStrategy:
 
 auth_backend = AuthenticationBackend(
     name="jwt",
-    transport=cookie_transport,
+    transport=bearer_transport,
     get_strategy=get_jwt_strategy,
 )
 
@@ -25,4 +26,10 @@ fastapi_users = FastAPIUsers[User, int](
     [auth_backend],
 )
 
+
+async def get_enabled_backends(request: Request):
+    """Return the enabled dependencies following custom logic."""
+    return [auth_backend]
+
 current_user = fastapi_users.current_user()
+current_active_user = fastapi_users.current_user(active=True)

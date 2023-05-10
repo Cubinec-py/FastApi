@@ -19,8 +19,8 @@ DB_PORT_TEST = os.environ.get("DB_PORT_TEST")
 DB_USER_TEST = os.environ.get("DB_USER_TEST")
 
 # Auth and Manager secrets
-SECRET_AUTH = os.environ.get("AUTH")
-SECRET_MANAGER = os.environ.get("MANAGER")
+SECRET_AUTH = os.environ.get("SECRET_AUTH")
+SECRET_MANAGER = os.environ.get("SECRET_MANAGER")
 
 # Mailing configs
 SMTP_USER = os.environ.get("SMTP_USER")

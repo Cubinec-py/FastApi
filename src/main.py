@@ -1,12 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi.middleware.cors import CORSMiddleware
 
 from redis import asyncio as aioredis
 
-from auth.base_config import auth_backend, fastapi_users
-from auth.schemas import UserRead, UserCreate
+from auth.base_config import auth_backend, fastapi_users, current_active_user
+from auth.models import User
+from auth.schemas import UserRead, UserCreate, UserUpdate
 
 from operations.router import router as router_operation
 from tasks.router import router as router_task
@@ -32,7 +33,7 @@ app.add_middleware(
 
 app.include_router(
     fastapi_users.get_auth_router(auth_backend),
-    prefix="/api/auth",
+    prefix="/api/auth/jwt",
     tags=["Auth"],
 )
 
@@ -41,6 +42,17 @@ app.include_router(
     prefix="/api/auth",
     tags=["Auth"],
 )
+
+app.include_router(
+    fastapi_users.get_users_router(UserRead, UserUpdate),
+    prefix="/api/users",
+    tags=["Users"],
+)
+
+
+@app.get("/api/authenticated-route")
+async def authenticated_route(user: User = Depends(current_active_user)):
+    return {"message": f"Hello {user.username}!"}
 
 app.include_router(router_operation)
 app.include_router(router_task)
