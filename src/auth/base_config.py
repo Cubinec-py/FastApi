@@ -4,7 +4,7 @@ from starlette.requests import Request
 
 from auth.manager import get_user_manager
 from auth.models import User
-from config import SECRET_AUTH
+from app_config import SECRET_AUTH
 
 bearer_transport = BearerTransport(tokenUrl="/api/auth/jwt/login")
 

@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: fastapi_app
+    restart: on-failure
+    networks:
+      - fastapi_app_network
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    depends_on:
+      - db_app
+    command: ["docker/app.sh"]
+    volumes:
+      - .:/app
+    ports:
+      - '8000:8000'
+    env_file:
+      - .env
+
+  db_app:
+    container_name: db_app
+    image: postgres:15.2-alpine
+    networks:
+      - fastapi_app_network
+    volumes:
+      - db_app:/var/lib/postgresql/data
+    expose:
+      - 5432
+    env_file:
+      - .env
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    networks:
+      - fastapi_app_network
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    env_file:
+      - .env
+    ports:
+      - '5050:80'
+
+  redis:
+    container_name: redis
+    image: redis:7.2-rc1-alpine
+    restart: on-failure
+    networks:
+      - fastapi_app_network
+    volumes:
+      - redis:/data
+    expose:
+      - 6379
+
+  celery:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    container_name: celery
+    networks:
+      - fastapi_app_network
+    restart: on-failure
+    depends_on:
+      - redis
+      - app
+    command: ["docker/parametrs.sh", "celery"]
+
+  flower:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    container_name: flower_app
+    networks:
+      - fastapi_app_network
+    restart: on-failure
+    command: [ "docker/parametrs.sh", "flower" ]
+    expose:
+      - 5555
+    depends_on:
+      - redis
+      - celery
+    ports:
+      - 8888:5555
+
+volumes:
+  db_app:
+  pgadmin:
+  redis:
+
+networks:
+  fastapi_app_network:

@@ -7,7 +7,7 @@ from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from auth.models import User
 from auth.utils import get_user_db
 
-from config import SECRET_AUTH
+from app_config import SECRET_AUTH
 
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):

@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from src.config import DB_HOST, DB_PORT, DB_USER, DB_NAME, DB_PASS
+from src.app_config import DB_HOST, DB_PORT, DB_USER, DB_NAME, DB_PASS
 from src.auth.models import *
 from src.database import metadata, Base
 from src.operations.models import *

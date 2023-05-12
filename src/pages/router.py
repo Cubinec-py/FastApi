@@ -6,7 +6,7 @@ router = APIRouter(
     tags=['Page']
 )
 
-templates = Jinja2Templates(directory="src/templates")
+templates = Jinja2Templates(directory="./src/templates")
 
 
 @router.get("/base")
