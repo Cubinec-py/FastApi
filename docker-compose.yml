@@ -11,9 +11,8 @@ services:
       dockerfile: ./docker/Dockerfile
     depends_on:
       - db_app
-    command: ["docker/app.sh"]
     volumes:
-      - .:/app
+      - .:/fastapi_app
     ports:
       - '8000:8000'
     env_file:
@@ -26,8 +25,8 @@ services:
       - fastapi_app_network
     volumes:
       - db_app:/var/lib/postgresql/data
-    expose:
-      - 5432
+    ports:
+      - '5432:5432'
     env_file:
       - .env
 

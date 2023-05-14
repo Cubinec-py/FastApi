@@ -19,7 +19,7 @@ app = FastAPI(
 )
 
 origins = [
-    "http://127.0.0.1:8000",
+    "http://80.92.206.218:8000",
 ]
 
 app.add_middleware(
@@ -52,7 +52,7 @@ app.include_router(
 
 @app.get("/api/authenticated-route")
 async def authenticated_route(user: User = Depends(current_active_user)):
-    return {"message": f"Hello {user.username}!"}
+    return {"message": f"All is fuck"}
 
 app.include_router(router_operation)
 app.include_router(router_task)

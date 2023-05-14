@@ -8,6 +8,8 @@ RUN pip install --no-cache-dir --upgrade -r /fastapi_app/requirements.txt
 
 COPY . /fastapi_app
 
-RUN chmod a+x ./docker/app.sh ./docker/parametrs.sh
+RUN chmod +x ./docker/*.sh
+
+ENTRYPOINT ["./docker/app.sh"]
 
 ENV PYTHONPATH "${PYTHONPATH}:/fastapi_app/"
