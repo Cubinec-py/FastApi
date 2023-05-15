@@ -4,11 +4,12 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from src.app_config import DB_HOST, DB_PORT, DB_USER, DB_NAME, DB_PASS
 from src.auth.models import *
 from src.database import metadata, Base
 from src.operations.models import *
 from src.chat.models import *
+
+from src.settings.settings import *
 
 import os
 import sys
@@ -20,11 +21,8 @@ sys.path.append(os.path.join(sys.path[0], 'src'))
 config = context.config
 
 section = config.config_ini_section
-config.set_section_option(section, "DB_HOST", DB_HOST)
-config.set_section_option(section, "DB_PORT", DB_PORT)
-config.set_section_option(section, "DB_USER", DB_USER)
-config.set_section_option(section, "DB_NAME", DB_NAME)
-config.set_section_option(section, "DB_PASS", DB_PASS)
+url = f'{Settings.DATABASE_URL}?async_fallback=True'
+config.set_section_option(section, "DATABASE_URL", url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

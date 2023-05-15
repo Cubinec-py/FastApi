@@ -7,12 +7,12 @@ from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from auth.models import User
 from auth.utils import get_user_db
 
-from app_config import SECRET_AUTH
+from settings.settings import *
 
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
-    reset_password_token_secret = SECRET_AUTH
-    verification_token_secret = SECRET_AUTH
+    reset_password_token_secret = Settings.TOKENS_SECRET_KEY
+    verification_token_secret = Settings.TOKENS_SECRET_KEY
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
         print(f"User {user.id} has registered.")

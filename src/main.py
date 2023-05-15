@@ -8,27 +8,23 @@ from redis import asyncio as aioredis
 from auth.base_config import auth_backend, fastapi_users, current_active_user
 from auth.models import User
 from auth.schemas import UserRead, UserCreate, UserUpdate
-from app_config import REDIS_HOST, REDIS_PORT
 from operations.router import router as router_operation
 from tasks.router import router as router_task
 from chat.router import router as router_chat
 from pages.router import router as router_page
 
+from settings.settings import Settings
+
 app = FastAPI(
     title="Trading App"
 )
 
-origins = [
-    "http://80.92.206.218:8000",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS", "DELETE", "PATCH", "PUT"],
-    allow_headers=["Content-Type", "Set-Cookie", "Access-Control-Allow-Headers", "Access-Control-Allow-Origin",
-                   "Authorization"],
+    allow_origins=Settings.CORS_ALLOW_ORIGINS,
+    allow_credentials=Settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=Settings.CORS_ALLOW_METHODS,
+    allow_headers=Settings.CORS_ALLOW_HEADERS,
 )
 
 app.include_router(
@@ -62,5 +58,9 @@ app.include_router(router_page)
 
 @app.on_event("startup")
 async def startup():
-    redis = aioredis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}", encoding="utf8", decode_responses=True)
+    redis = aioredis.from_url(
+        Settings.REDIS_URL,
+        encoding="utf8",
+        decode_responses=True
+    )
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")

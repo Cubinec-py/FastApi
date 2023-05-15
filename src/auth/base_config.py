@@ -4,15 +4,14 @@ from starlette.requests import Request
 
 from auth.manager import get_user_manager
 from auth.models import User
-from app_config import SECRET_AUTH
+
+from settings.settings import *
 
 bearer_transport = BearerTransport(tokenUrl="/api/auth/jwt/login")
 
-SECRET = SECRET_AUTH
-
 
 def get_jwt_strategy() -> JWTStrategy:
-    return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
+    return JWTStrategy(secret=Settings.TOKENS_SECRET_KEY, lifetime_seconds=Settings.TOKENS_ACCESS_LIFETIME_SECONDS)
 
 
 auth_backend = AuthenticationBackend(

@@ -16,7 +16,7 @@ services:
     ports:
       - '8000:8000'
     env_file:
-      - .env
+      - .env.dev
 
   db_app:
     container_name: db_app
@@ -28,7 +28,7 @@ services:
     ports:
       - '5432:5432'
     env_file:
-      - .env
+      - .env.dev
 
   pgadmin:
     container_name: pgadmin
@@ -38,7 +38,7 @@ services:
     volumes:
       - pgadmin:/var/lib/pgadmin
     env_file:
-      - .env
+      - .env.dev
     ports:
       - '5050:80'
 
@@ -64,7 +64,7 @@ services:
     depends_on:
       - redis
       - app
-    command: ["docker/parametrs.sh", "celery"]
+    command: ["dev/parametrs.sh", "celery"]
 
   flower:
     build:
@@ -74,7 +74,7 @@ services:
     networks:
       - fastapi_app_network
     restart: on-failure
-    command: [ "docker/parametrs.sh", "flower" ]
+    command: [ "dev/parametrs.sh", "flower" ]
     expose:
       - 5555
     depends_on:
