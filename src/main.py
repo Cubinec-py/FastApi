@@ -52,7 +52,7 @@ app.include_router(
 
 @app.get("/api/authenticated-route")
 async def authenticated_route(user: User = Depends(current_active_user)):
-    return {"message": f"All is fuck"}
+    return {"message": f"Hello {user.username}"}
 
 app.include_router(router_operation)
 app.include_router(router_task)

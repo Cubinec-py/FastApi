@@ -14,6 +14,7 @@ router = APIRouter(
 
 @router.get("/base")
 def get_base_page(request: Request):
+    print('ok')
     return templates.TemplateResponse("base.html", {"request": request})
 
 
