@@ -7,9 +7,9 @@ from auth.base_config import current_active_user
 
 
 router = APIRouter(
-    prefix='/api/tasks',
+    prefix="/api/tasks",
     dependencies=[Depends(current_active_user)],
-    tags=['Tasks'],
+    tags=["Tasks"],
 )
 
 
@@ -23,8 +23,4 @@ def get_dashboard_report(background_tasks: BackgroundTasks, user=Depends(current
 
     # Using Celery tasks - 600ms
     send_mail.delay(user.username)
-    return {
-        "status": 200,
-        "data": "Письмо отправлено",
-        "details": None
-    }
+    return {"status": 200, "data": "Письмо отправлено", "details": None}

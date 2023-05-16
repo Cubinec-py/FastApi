@@ -8,10 +8,7 @@ from chat.models import Message
 from chat.schemas import MessageModel
 from database import async_session_maker, get_async_session
 
-router = APIRouter(
-    prefix="/chat",
-    tags=['Chat']
-)
+router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
 class ConnectionManager:
@@ -34,9 +31,7 @@ class ConnectionManager:
     @staticmethod
     async def add_messages_to_database(message: str):
         async with async_session_maker() as session:
-            stmt = insert(Message).values(
-                message=message
-            )
+            stmt = insert(Message).values(message=message)
             await session.execute(stmt)
             await session.commit()
 
@@ -46,7 +41,7 @@ manager = ConnectionManager()
 
 @router.get("/last_messages")
 async def get_last_messages(
-        session: AsyncSession = Depends(get_async_session),
+    session: AsyncSession = Depends(get_async_session),
 ) -> List[MessageModel]:
     query = select(Message).order_by(Message.id.desc()).limit(5)
     messages = await session.execute(query)

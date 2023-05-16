@@ -4,24 +4,21 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from src.auth.models import *
 from src.database import metadata, Base
-from src.operations.models import *
-from src.chat.models import *
 
-from src.settings.settings import *
+from src.settings.settings import Settings
 
 import os
 import sys
 
-sys.path.append(os.path.join(sys.path[0], 'src'))
+sys.path.append(os.path.join(sys.path[0], "src"))
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
 section = config.config_ini_section
-url = f'{Settings.DATABASE_URL}?async_fallback=True'
+url = f"{Settings.DATABASE_URL}?async_fallback=True"
 config.set_section_option(section, "DATABASE_URL", url)
 
 # Interpret the config file for Python logging.
@@ -79,9 +76,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

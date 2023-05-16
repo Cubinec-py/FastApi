@@ -19,10 +19,18 @@ class Settings(BaseSettings):
     TRUSTED_HOSTS: list[str] = Field(default=["*"])
     # CORS settings
     CORS_ALLOW_CREDENTIALS: bool = Field(default=True)
-    CORS_ALLOW_HEADERS: list[str] = Field(default=[
-        "Content-Type", "Set-Cookie", "Access-Control-Allow-Headers", "Access-Control-Allow-Origin", "Authorization"
-    ])
-    CORS_ALLOW_METHODS: list[str] = Field(default=["GET", "POST", "OPTIONS", "DELETE", "PATCH", "PUT"])
+    CORS_ALLOW_HEADERS: list[str] = Field(
+        default=[
+            "Content-Type",
+            "Set-Cookie",
+            "Access-Control-Allow-Headers",
+            "Access-Control-Allow-Origin",
+            "Authorization",
+        ]
+    )
+    CORS_ALLOW_METHODS: list[str] = Field(
+        default=["GET", "POST", "OPTIONS", "DELETE", "PATCH", "PUT"]
+    )
     CORS_ALLOW_ORIGINS: list[str] = Field(default=origins)
     # JWT tokens managements settings
     TOKENS_ACCESS_LIFETIME_SECONDS: int = Field(default=3600)  # 1 HOUR

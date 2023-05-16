@@ -15,9 +15,7 @@ from pages.router import router as router_page
 
 from settings.settings import Settings
 
-app = FastAPI(
-    title="Trading App"
-)
+app = FastAPI(title="Trading App")
 
 app.add_middleware(
     CORSMiddleware,
@@ -50,6 +48,7 @@ app.include_router(
 async def authenticated_route(user: User = Depends(current_active_user)):
     return {"message": f"Hello {user.username}"}
 
+
 app.include_router(router_operation)
 app.include_router(router_task)
 app.include_router(router_chat)
@@ -59,8 +58,6 @@ app.include_router(router_page)
 @app.on_event("startup")
 async def startup():
     redis = aioredis.from_url(
-        Settings.REDIS_URL,
-        encoding="utf8",
-        decode_responses=True
+        Settings.REDIS_URL, encoding="utf8", decode_responses=True
     )
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
