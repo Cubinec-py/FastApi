@@ -10,8 +10,10 @@ origins = [
 
 class Settings(BaseSettings):
     # Back-end settings
-    DEBUG: bool = Field(default=False)
+    DEBUG: bool = Field(default=True)
     SHOW_SETTINGS: bool = Field(default=False)
+    HOST: str = Field()
+    PORT: str = Field()
     SERVER_URL: str = Field()
     WS_URL: str = Field()
     WORKERS_COUNT: int = Field(default=4)
@@ -38,7 +40,7 @@ class Settings(BaseSettings):
     TOKENS_SECRET_KEY: str = Field()
     # Logging settings
     LOG_LEVEL: int = Field(default=logging.WARNING)
-    LOG_USE_COLORS: bool = Field(default=False)
+    LOG_USE_COLORS: bool = Field(default=True)
     # Database settings
     DATABASE_URL: str = Field()
     # Redis settings
@@ -56,7 +58,7 @@ class Settings(BaseSettings):
         env_nested_delimiter = "__"
 
 
-@functools.lru_cache()
+# @functools.lru_cache()
 def get_settings() -> Settings:
     return Settings()
 

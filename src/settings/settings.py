@@ -5,6 +5,6 @@ load_dotenv()
 
 
 if os.environ.get("SETTINGS") == "Local":
-    from .local.settings import Settings
+    from .local.settings import *
 elif os.environ.get("SETTINGS") == "Dev":
-    from .dev.settings import Settings
+    from .dev.settings import *

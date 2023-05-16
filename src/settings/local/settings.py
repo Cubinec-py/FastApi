@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     # Back-end settings
     DEBUG: bool = Field(default=True)
     SHOW_SETTINGS: bool = Field(default=True)
+    HOST: str = Field()
+    PORT: str = Field()
     SERVER_URL: str = Field()
     WS_URL: str = Field()
     WORKERS_COUNT: int = Field(default=1)

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends
+from fastapi.responses import ORJSONResponse
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,9 +14,17 @@ from tasks.router import router as router_task
 from chat.router import router as router_chat
 from pages.router import router as router_page
 
+from settings.loggers import get_logger, setup_logging
 from settings.settings import Settings
 
-app = FastAPI(title="Trading App")
+logger = get_logger(name=__name__)
+
+app = FastAPI(
+    debug=Settings.DEBUG,
+    version="0.0.1",
+    default_response_class=ORJSONResponse,
+    title="FastAPI App"
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,23 +34,21 @@ app.add_middleware(
     allow_headers=Settings.CORS_ALLOW_HEADERS,
 )
 
-app.include_router(
-    fastapi_users.get_auth_router(auth_backend),
-    prefix="/api/auth/jwt",
-    tags=["Auth"],
-)
 
-app.include_router(
-    fastapi_users.get_register_router(UserRead, UserCreate),
-    prefix="/api/auth",
-    tags=["Auth"],
-)
+@app.on_event(event_type="startup")
+def enable_logging() -> None:
+    print('here')
+    setup_logging()
+    logger.debug(msg="Logging configuration completed.")
 
-app.include_router(
-    fastapi_users.get_users_router(UserRead, UserUpdate),
-    prefix="/api/users",
-    tags=["Users"],
-)
+
+@app.on_event("startup")
+async def startup():
+    print('here 1')
+    redis = aioredis.from_url(
+        Settings.REDIS_URL, encoding="utf8", decode_responses=True
+    )
+    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
 
 @app.get("/api/authenticated-route")
@@ -49,15 +56,27 @@ async def authenticated_route(user: User = Depends(current_active_user)):
     return {"message": f"Hello {user.username}"}
 
 
-app.include_router(router_operation)
-app.include_router(router_task)
-app.include_router(router_chat)
-app.include_router(router_page)
+API_PREFIX = "/api/v1"
 
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix=API_PREFIX,
+    tags=["Auth"],
+)
 
-@app.on_event("startup")
-async def startup():
-    redis = aioredis.from_url(
-        Settings.REDIS_URL, encoding="utf8", decode_responses=True
-    )
-    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix=API_PREFIX,
+    tags=["Auth"],
+)
+
+app.include_router(
+    fastapi_users.get_users_router(UserRead, UserUpdate),
+    prefix=API_PREFIX,
+    tags=["Users"],
+)
+
+app.include_router(router=router_operation, prefix=API_PREFIX)
+app.include_router(router=router_task, prefix=API_PREFIX)
+app.include_router(router=router_chat)
+app.include_router(router=router_page)

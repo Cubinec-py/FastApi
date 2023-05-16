@@ -9,8 +9,8 @@ from operations.schemas import OperationCreate
 from auth.base_config import current_active_user
 
 router = APIRouter(
-    dependencies=[Depends(current_active_user)],
-    prefix="/api/operations",
+    # dependencies=[Depends(current_active_user)],
+    prefix="/operations",
     tags=["Operation"],
 )
 
