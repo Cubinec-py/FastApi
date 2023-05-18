@@ -6,12 +6,12 @@ from fastapi_users.authentication import (
 )
 from starlette.requests import Request
 
-from auth.manager import get_user_manager
-from auth.models import User
+from src.auth.manager import get_user_manager
+from src.auth.models import User
 
-from settings.settings import Settings
+from src.settings.settings import Settings
 
-bearer_transport = BearerTransport(tokenUrl="/api/auth/jwt/login")
+bearer_transport = BearerTransport(tokenUrl="/api/v1/login")
 
 
 def get_jwt_strategy() -> JWTStrategy:

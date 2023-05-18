@@ -1,5 +1,5 @@
-import functools
 import logging
+import multiprocessing
 
 from pydantic import BaseSettings, Extra, Field
 
@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     PORT: str = Field()
     SERVER_URL: str = Field()
     WS_URL: str = Field()
-    WORKERS_COUNT: int = Field(default=4)
+    WORKERS_COUNT: int = Field(default=multiprocessing.cpu_count() * 2 + 1)
     DATETIME_FORMAT: str = Field(default="%Y-%m-%d %H:%M:%S")
     TRUSTED_HOSTS: list[str] = Field(default=["*"])
     # CORS settings
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     TOKENS_REFRESH_LIFETIME_SECONDS: int = Field(default=86400)  # 1 DAY
     TOKENS_SECRET_KEY: str = Field()
     # Logging settings
-    LOG_LEVEL: int = Field(default=logging.WARNING)
+    LOG_LEVEL: int = Field(default=logging.DEBUG)
     LOG_USE_COLORS: bool = Field(default=True)
     # Database settings
     DATABASE_URL: str = Field()

@@ -31,8 +31,8 @@ def _get_root_handler() -> list[str]:
         In other cases return `default_handler`.
     """
     result = ["colorful_handler"]
-    if Settings.LOG_USE_COLORS and Settings.DEBUG:
-        return ["colorful_handler"]
+    # if Settings.LOG_USE_COLORS and Settings.DEBUG:
+    #     return ["colorful_handler"]
     return result
 
 
@@ -82,7 +82,7 @@ LOGGING_CONFIG: dict[str, typing.Any] = {
     "root": {"level": Settings.LOG_LEVEL, "handlers": _get_root_handler()},
     "loggers": {
         "asyncio": {"level": "WARNING", "handlers": ["default_handler"], "propagate": False},
-        "gunicorn": {"level": "WARNING", "handlers": ["default_handler"], "propagate": False},
+        "gunicorn": {"level": "INFO", "handlers": ["colorful_handler"], "propagate": False},
         "uvicorn": {"level": "WARNING", "handlers": ["default_handler"], "propagate": False},
         "local": {"level": "DEBUG", "handlers": ["debug_handler"], "propagate": False},
     },
@@ -90,7 +90,6 @@ LOGGING_CONFIG: dict[str, typing.Any] = {
 
 
 def setup_logging() -> None:
-    print('Starting')
     """Setup logging from dict configuration object."""
     logging.config.dictConfig(config=LOGGING_CONFIG)
 
@@ -200,7 +199,6 @@ class Styler:
 
 def _format_time(record: logging.LogRecord, datefmt: str = DATE_TIME_FORMAT_ISO_8601) -> str:
     """Format datetime to UTC datetime."""
-    print('Time now')
     date_time_utc = datetime.datetime.utcfromtimestamp(record.created)
     return datetime.datetime.strftime(date_time_utc, datefmt or DATE_TIME_FORMAT_ISO_8601)
 

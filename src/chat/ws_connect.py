@@ -3,7 +3,7 @@ import time
 
 import aiohttp
 
-from settings.settings import Settings
+from src.settings.settings import Settings
 
 
 async def main():

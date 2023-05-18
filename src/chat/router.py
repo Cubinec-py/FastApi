@@ -4,9 +4,9 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from chat.models import Message
-from chat.schemas import MessageModel
-from database import async_session_maker, get_async_session
+from src.chat.models import Message
+from src.chat.schemas import MessageModel
+from src.database import async_session_maker, get_async_session
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 

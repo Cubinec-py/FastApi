@@ -3,9 +3,9 @@ from email.message import EmailMessage
 
 from celery import Celery
 
-from settings.settings import Settings
+from src.settings.settings import Settings
 
-celery = Celery("tasks", broker=Settings.REDIS_URL)
+celery = Celery("tasks", broker=Settings.REDIS_URL, backend=Settings.REDIS_URL)
 
 
 def get_user_email_template(username: str):

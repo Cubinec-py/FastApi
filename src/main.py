@@ -6,18 +6,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from redis import asyncio as aioredis
 
-from auth.base_config import auth_backend, fastapi_users, current_active_user
-from auth.models import User
-from auth.schemas import UserRead, UserCreate, UserUpdate
-from operations.router import router as router_operation
-from tasks.router import router as router_task
-from chat.router import router as router_chat
-from pages.router import router as router_page
+from src.auth.base_config import auth_backend, fastapi_users, current_active_user
+from src.auth.models import User
+from src.auth.schemas import UserRead, UserCreate, UserUpdate
+from src.operations.router import router as router_operation
+from src.tasks.router import router as router_task
+from src.chat.router import router as router_chat
+from src.pages.router import router as router_page
 
-from settings.loggers import get_logger, setup_logging
-from settings.settings import Settings
+from src.settings.loggers import get_logger, setup_logging
+from src.settings.settings import Settings
 
-logger = get_logger(name=__name__)
+# logger = get_logger(name='gunicorn')
 
 app = FastAPI(
     debug=Settings.DEBUG,
@@ -35,23 +35,21 @@ app.add_middleware(
 )
 
 
-@app.on_event(event_type="startup")
-def enable_logging() -> None:
-    print('here')
-    setup_logging()
-    logger.debug(msg="Logging configuration completed.")
+# @app.on_event(event_type="startup")
+# def enable_logging() -> None:
+#     setup_logging()
+#     logger.debug(msg="Logging configuration completed.")
 
 
 @app.on_event("startup")
 async def startup():
-    print('here 1')
     redis = aioredis.from_url(
         Settings.REDIS_URL, encoding="utf8", decode_responses=True
     )
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
 
-@app.get("/api/authenticated-route")
+@app.get("/api/v1/authenticated-route")
 async def authenticated_route(user: User = Depends(current_active_user)):
     return {"message": f"Hello {user.username}"}
 

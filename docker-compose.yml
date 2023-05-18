@@ -1,9 +1,10 @@
 version: '3.8'
 
 services:
-  app:
+  app: &app
     container_name: fastapi_app
     restart: on-failure
+    command: ["docker/app.sh"]
     networks:
       - fastapi_app_network
     build:
@@ -14,7 +15,7 @@ services:
     volumes:
       - .:/fastapi_app
     ports:
-      - '8000:8000'
+      - "8000:8000"
     env_file:
       - .env.dev
 
@@ -26,7 +27,7 @@ services:
     volumes:
       - db_app:/var/lib/postgresql/data
     ports:
-      - '5432:5432'
+      - "5432:5432"
     env_file:
       - .env.dev
 
@@ -40,7 +41,7 @@ services:
     env_file:
       - .env.dev
     ports:
-      - '5050:80'
+      - "5050:80"
 
   redis:
     container_name: redis
@@ -52,36 +53,51 @@ services:
       - redis:/data
     expose:
       - 6379
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-h", "app", "ping" ]
 
   celery:
     build:
       context: .
-      dockerfile: ./docker/Dockerfile
+      dockerfile: docker/Dockerfile
     container_name: celery
+    restart: always
     networks:
       - fastapi_app_network
-    restart: on-failure
+    volumes:
+      - .:/fastapi_app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    env_file:
+      - .env.dev
     depends_on:
       - redis
+      - flower
+      - db_app
       - app
-    command: ["dev/parametrs.sh", "celery"]
+    command: ["docker/parametrs.sh"]
+    healthcheck:
+      test: [ "CMD-SHELL", "ps ax", "|" ,"grep -v grep", "|" ,"grep celery",  "||", "exit 1" ]
+      interval: 1m
+      timeout: 5s
+      retries: 2
 
   flower:
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile
-    container_name: flower_app
+    image: mher/flower:latest
+    container_name: flower
     networks:
       - fastapi_app_network
-    restart: on-failure
-    command: [ "dev/parametrs.sh", "flower" ]
-    expose:
-      - 5555
     depends_on:
       - redis
-      - celery
     ports:
-      - 8888:5555
+      - "5566:5566"
+    volumes:
+      - .:/fastapi_app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - FLOWER_PORT=5566
 
 volumes:
   db_app:

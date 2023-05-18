@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
-from settings.settings import Settings
+from src.settings.settings import Settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 

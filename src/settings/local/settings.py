@@ -1,5 +1,6 @@
 import functools
 import logging
+import multiprocessing
 
 from pydantic import BaseSettings, Extra, Field
 
@@ -16,7 +17,7 @@ class Settings(BaseSettings):
     PORT: str = Field()
     SERVER_URL: str = Field()
     WS_URL: str = Field()
-    WORKERS_COUNT: int = Field(default=1)
+    WORKERS_COUNT: int = multiprocessing.cpu_count() * 2 + 1
     DATETIME_FORMAT: str = Field(default="%Y-%m-%d %H:%M:%S")
     TRUSTED_HOSTS: list[str] = Field(default=["*"])
     # CORS settings

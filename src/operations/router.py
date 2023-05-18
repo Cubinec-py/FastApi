@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_async_session
-from operations.models import Operation
-from operations.schemas import OperationCreate
+from src.database import get_async_session
+from src.operations.models import Operation
+from src.operations.schemas import OperationCreate
 
-from auth.base_config import current_active_user
+from src.auth.base_config import current_active_user
 
 router = APIRouter(
-    # dependencies=[Depends(current_active_user)],
+    dependencies=[Depends(current_active_user)],
     prefix="/operations",
     tags=["Operation"],
 )
