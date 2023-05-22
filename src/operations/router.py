@@ -7,9 +7,15 @@ from src.operations.models import Operation
 from src.operations.schemas import OperationCreate
 
 from src.auth.base_config import current_active_user
+# from src.settings.loggers import get_logger
+# import logging
+#
+# logger = get_logger(name=__name__)
+# logger = logging.getLogger(name=__name__)
+
 
 router = APIRouter(
-    dependencies=[Depends(current_active_user)],
+    # dependencies=[Depends(current_active_user)],
     prefix="/operations",
     tags=["Operation"],
 )
@@ -23,8 +29,14 @@ async def get_specific_operations(
     try:
         query = select(Operation).where(Operation.type == operation_type)
         result = await session.execute(query)
+        # logger.info(msg=f"Get operations")
+        # logger.debug(msg=f"Get operations")
+        # logger.warning(msg=f"Get operations")
         return {"status": "success", "data": result.mappings().all(), "details": None}
     except Exception:
+        # logger.info(msg=f"Error on get operations")
+        # logger.debug(msg=f"Error on get operations")
+        # logger.warning(msg=f"Error on get operations")
         raise HTTPException(
             status_code=500, detail={"status": "error", "data": None, "details": None}
         )

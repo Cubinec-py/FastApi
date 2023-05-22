@@ -56,6 +56,22 @@ services:
     healthcheck:
       test: [ "CMD", "redis-cli", "-h", "app", "ping" ]
 
+  twitch:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: twitch
+    restart: always
+    networks:
+      - fastapi_app_network
+    depends_on:
+      - db_app
+    command: python3 src/twitch/utils.py
+    volumes:
+      - .:/fastapi_app
+    ports:
+      - "6666:6666"
+
   celery:
     build:
       context: .

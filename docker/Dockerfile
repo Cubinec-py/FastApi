@@ -8,6 +8,9 @@ ENV PYTHONDONTWRITEBYTECODE 1
 
 COPY ./requirements.txt /fastapi_app/requirements.txt
 
+RUN apt-get update
+RUN apt-get install libasound-dev libportaudio2 libportaudiocpp0 portaudio19-dev -y
+RUN pip install pyaudio
 RUN pip install -U pip && pip install --no-cache-dir --upgrade -r /fastapi_app/requirements.txt
 
 COPY . /fastapi_app

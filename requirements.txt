@@ -9,6 +9,7 @@ attrs==23.1.0
 bcrypt==4.0.1
 billiard==3.6.4.0
 black==23.3.0
+Brotli==1.0.9
 celery==5.2.7
 certifi==2022.12.7
 cffi==1.15.1
@@ -26,7 +27,6 @@ fastapi-cache2==0.2.1
 fastapi-users==11.0.0
 fastapi-users-db-sqlalchemy==5.0.0
 flake8==6.0.0
-flower==1.2.0
 frozenlist==1.3.3
 greenlet==2.0.2
 gunicorn==20.1.0
@@ -37,6 +37,8 @@ httpx==0.24.0
 humanize==4.6.0
 idna==3.4
 iniconfig==2.0.0
+install==1.3.5
+iso8601==1.1.0
 itsdangerous==2.1.2
 Jinja2==3.1.2
 kombu==5.2.4
@@ -45,6 +47,7 @@ Mako==1.2.4
 MarkupSafe==2.1.2
 mccabe==0.7.0
 multidict==6.0.4
+mutagen==1.46.0
 mypy-extensions==1.0.0
 orjson==3.8.11
 packaging==23.1
@@ -57,6 +60,7 @@ prometheus-client==0.16.0
 prompt-toolkit==3.0.38
 pycodestyle==2.10.0
 pycparser==2.21
+pycryptodomex==3.18.0
 pydantic==1.10.5
 pyflakes==3.0.1
 PyJWT==2.6.0
@@ -65,6 +69,7 @@ pytest-asyncio==0.21.0
 python-dateutil==2.8.2
 python-dotenv==1.0.0
 python-multipart==0.0.6
+pytube==15.0.0
 pytz==2023.3
 pytzdata==2020.1
 PyYAML==6.0
@@ -75,6 +80,7 @@ SQLAlchemy==2.0.12
 starlette==0.25.0
 tomli==2.0.1
 tornado==6.3.1
+twitchio==2.6.0
 typing_extensions==4.5.0
 ujson==5.7.0
 uvicorn==0.20.0
@@ -84,3 +90,4 @@ watchfiles==0.18.1
 wcwidth==0.2.6
 websockets==10.4
 yarl==1.9.2
+yt-dlp==2023.3.4

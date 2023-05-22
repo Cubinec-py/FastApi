@@ -8,7 +8,10 @@ from src.chat.models import Message
 from src.chat.schemas import MessageModel
 from src.database import async_session_maker, get_async_session
 
-router = APIRouter(prefix="/chat", tags=["Chat"])
+router = APIRouter(
+    prefix="/chat",
+    tags=["Chat"]
+)
 
 
 class ConnectionManager:

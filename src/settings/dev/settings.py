@@ -10,7 +10,7 @@ origins = [
 
 class Settings(BaseSettings):
     # Back-end settings
-    DEBUG: bool = Field(default=True)
+    DEBUG: bool = Field(default=False)
     SHOW_SETTINGS: bool = Field(default=False)
     HOST: str = Field()
     PORT: str = Field()
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     TOKENS_REFRESH_LIFETIME_SECONDS: int = Field(default=86400)  # 1 DAY
     TOKENS_SECRET_KEY: str = Field()
     # Logging settings
-    LOG_LEVEL: int = Field(default=logging.DEBUG)
+    LOG_LEVEL: int = Field(default=logging.INFO)
     LOG_USE_COLORS: bool = Field(default=True)
     # Database settings
     DATABASE_URL: str = Field()

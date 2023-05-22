@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="playerContainer">
+    <div id="player"></div>
+</div>
+<script>
+    let player;
+    let socket = new WebSocket("{{ WS_URL }}/api/v1/playlist/ws");
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+            height: '360',
+            width: '640',
+            videoId: "{{ video_id }}",
+            playerVars: {
+                'autoplay': 1,
+                'controls': 0,
+                'disablekb': 1,
+                'fs': 0,
+                'iv_load_policy': 3,
+                'loop': 1,
+                'rel': 0,
+                'showinfo': 0
+            },
+            events: {
+                'onReady': onPlayerReady
+            }
+        });
+    }
+
+    function onPlayerReady(event) {
+        event.target.playVideo();
+    }
+
+    function playNewVideo(videoId) {
+        if (player) {
+            player.loadVideoById(videoId);
+        } else {
+            onYouTubeIframeAPIReady();
+        }
+    }
+
+    socket.onmessage = function(event) {
+        console.log(event);
+        console.info(event);
+        // let newVideoId = event.data;
+        // if (newVideoId) {
+        //     playNewVideo(newVideoId);
+        // }
+    };
+</script>
+{% endblock %}

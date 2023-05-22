@@ -9,7 +9,7 @@ from src.auth.base_config import current_active_user
 
 router = APIRouter(
     prefix="/tasks",
-    dependencies=[Depends(current_active_user)],
+    # dependencies=[Depends(current_active_user)],
     tags=["Tasks"],
 )
 
