@@ -2,8 +2,9 @@ import os
 import re
 import twitchio
 import aiohttp
+import pytube
 
-from pytube import YouTube
+from pytube import YouTube, Stream
 from twitchio.ext import pubsub
 from twitchio.ext import commands, sounds
 from dotenv import load_dotenv
@@ -23,6 +24,7 @@ client.pubsub = pubsub.PubSubPool(client)
 
 class Bot(commands.Bot):
     def __init__(self):
+        self.skip_count = 0
         super().__init__(
             token=my_token,
             prefix="!",
@@ -34,21 +36,33 @@ class Bot(commands.Bot):
         if event.reward.title == 'Трек':
             link = event.input
             if re.match('^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$', link):
-                url = f'{Settings.SERVER_URL}/api/v1/playlist'
-                data = {'track': link}
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(url, json=data) as resp:
-                        await resp.text()
                 track = YouTube(link)
-                await bot.get_channel('cubinec2012').send(f'@{event.user.name} Трек {track.streams[0].title} успешно добавлен в плейлист!')
+                try:
+                    any(stream.is_live for stream in track.streams)
+                except pytube.exceptions.LiveStreamError:
+                    await bot.get_channel('cubinec2012').send(f'@{event.user.name} Только треки, не онлайн стримы!')
+                    return
+                if track.length < 300:
+                    url = f'{Settings.SERVER_URL}/api/v1/playlist'
+                    data = {'track': link}
+                    async with aiohttp.ClientSession() as session:
+                        async with session.post(url, json=data) as resp:
+                            await resp.text()
+                    await bot.get_channel('cubinec2012').send(f'@{event.user.name} Трек {track.streams[0].title} успешно добавлен в плейлист!')
+                elif track.length > 300:
+                    await bot.get_channel('cubinec2012').send(f'@{event.user.name} Только треки длительностью не больше 5 минут!')
             else:
                 await bot.get_channel('cubinec2012').send(f'@{event.user.name} только youtube ссылки PixelBob')
         elif event.reward.title == 'Скип':
             pass
 
-    # @commands.command(name='скип')
-    # async def skip_track(self, ctx):
-    #     await ctx.channel.send('Skipping the current track!')
+    @commands.command(name='скип')
+    async def skip_track(self, ctx):
+        if self.skip_count > 4:
+            self.skip_count = 0
+        else:
+            self.skip_count += 1
+        # await ctx.channel.send('Skipping the current track!')
 
     async def event_ready(self) -> None:
         print(f"Logged in as | {self.nick}")
