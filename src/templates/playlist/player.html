@@ -1,15 +1,18 @@
 <style>
-  body {
-    background-color: green;
-  }
+body {
+  background-color: green;
+}
 </style>
+<script src="https://www.youtube.com/iframe_api"></script>
 <div id="playerContainer">
-    <div id="player"></div>
+  <div id="player"></div>
 </div>
+
 <script>
   let player;
   let socket = new WebSocket("{{ WS_URL }}/api/v1/playlist/ws");
   let videoEnded = false;
+  const API_KEY = "{{ API_KEY }}";
 
   function loadYouTubePlayerAPI() {
     const tag = document.createElement('script');
@@ -17,6 +20,12 @@
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
   }
+  // function loadYouTubePlayerAPI() {
+  //   const tag = document.createElement('script');
+  //   tag.src = `https://www.youtube.com/iframe_api?api=${API_KEY}`;
+  //   const firstScriptTag = document.getElementsByTagName('script')[0];
+  //   firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+  // }
 
   loadYouTubePlayerAPI();
 
@@ -41,7 +50,6 @@
       }
     });
   }
-
   function onPlayerReady(event) {
     event.target.playVideo();
   }
@@ -62,7 +70,6 @@
     if (player) {
       player.loadVideoById(videoId);
     } else {
-      // If the YouTube Player API is not loaded, load it again
       loadYouTubePlayerAPI();
     }
   }
@@ -77,7 +84,7 @@
 
   socket.onmessage = function(event) {
     let newVideoId = event.data;
-    console.log(newVideoId)
+    console.log(newVideoId);
     if (newVideoId) {
       playNewVideo(newVideoId);
     }
@@ -85,6 +92,7 @@
 
   const metaTag = document.createElement('meta');
   metaTag.setAttribute('http-equiv', 'Content-Security-Policy');
-  metaTag.setAttribute('content', "default-src 'self' https://www.youtube.com");
+  metaTag.setAttribute('content', `default-src 'self' https://www.youtube.com https://www.googleapis.com 'unsafe-inline';`);
   document.head.appendChild(metaTag);
+
 </script>

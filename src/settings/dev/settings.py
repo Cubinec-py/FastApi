@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     PORT: str = Field()
     SERVER_URL: str = Field()
     WS_URL: str = Field()
-    WORKERS_COUNT: int = Field(default=multiprocessing.cpu_count() * 2 + 1)
+    WORKERS_COUNT: int = Field(default=1)
     DATETIME_FORMAT: str = Field(default="%Y-%m-%d %H:%M:%S")
     TRUSTED_HOSTS: list[str] = Field(default=["*"])
     # CORS settings
@@ -51,6 +51,8 @@ class Settings(BaseSettings):
     SMTP_PORT: int = Field()
     SMTP_USER: str = Field()
     SMTP_PASSWORD: str = Field()
+    # Youtube API_KEY
+    YOUTUBE_API_KEY: str = Field()
 
     class Config(BaseSettings.Config):
         extra = Extra.ignore

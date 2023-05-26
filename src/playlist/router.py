@@ -1,12 +1,10 @@
-import asyncio
-import os
-
 from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect
 from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from pytube import extract, YouTube
 
-from src.database import get_async_session
+from src.chat.models import Message
+from src.database import get_async_session, async_session_maker
 from src.playlist.models import Playlist
 from src.playlist.schemas import PlaylistCreate, VideoUrl
 
@@ -43,7 +41,8 @@ async def get_video_page(request: Request):
         "playlist/player.html",
         {
             "request": request,
-            "video_id": current_video_id,
+            "API_KEY": Settings.YOUTUBE_API_KEY,
+            "video_id": '',
             "WS_URL": Settings.WS_URL,
         })
 
@@ -54,8 +53,7 @@ async def play_new_video(url: str):
     age_permission = extract.is_age_restricted(url)
     private = extract.is_private(url)
     lenth = YouTube(url)
-    print('ws_manager post', id(ws_manager), os.getpid())
-    print('post', ws_manager.active_connections)
+    print("clients", ws_manager.active_connections)
     await ws_manager.broadcast(video_id)
     return {
         "message": f"New video started: {video_id}",
@@ -67,11 +65,9 @@ async def play_new_video(url: str):
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await ws_manager.connect(websocket)
-    print('ws_manager init', id(ws_manager), os.getpid())
-    print('init', ws_manager.active_connections)
     try:
         while True:
             data = await websocket.receive_text()
             print(f"Received data from client: {data}")
     except WebSocketDisconnect:
-        ws_manager.disconnect(websocket)
+        await ws_manager.disconnect(websocket)
