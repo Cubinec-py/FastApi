@@ -66,7 +66,7 @@ services:
       - fastapi_app_network
     depends_on:
       - db_app
-    command: python3 src/twitch/utils.py
+    command: python3 src/twitch/twitch.py
     volumes:
       - .:/fastapi_app
     ports:

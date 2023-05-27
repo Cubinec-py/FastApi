@@ -3,10 +3,9 @@ from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from pytube import extract, YouTube
 
-from src.chat.models import Message
-from src.database import get_async_session, async_session_maker
+from src.database import get_async_session
 from src.playlist.models import Playlist
-from src.playlist.schemas import PlaylistCreate, VideoUrl
+from src.playlist.schemas import PlaylistCreate
 
 from src.settings.settings import Settings, templates
 from src.settings.ws_conf import ConnectionManager
@@ -30,9 +29,9 @@ async def get_playlist(session: AsyncSession = Depends(get_async_session)):
 @router.post("")
 async def add_to_playlist(playlist: PlaylistCreate, session: AsyncSession = Depends(get_async_session)):
     stmt = insert(Playlist).values(**playlist.dict())
-    data = await session.execute(stmt)
+    await session.execute(stmt)
     await session.commit()
-    return {"status": "201 success", "data": data.mappings().all()}
+    return {"status": "201 success"}
 
 
 @router.get("/player")
@@ -53,7 +52,6 @@ async def play_new_video(url: str):
     age_permission = extract.is_age_restricted(url)
     private = extract.is_private(url)
     lenth = YouTube(url)
-    print("clients", ws_manager.active_connections)
     await ws_manager.broadcast(video_id)
     return {
         "message": f"New video started: {video_id}",

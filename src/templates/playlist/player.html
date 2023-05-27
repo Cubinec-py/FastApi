@@ -2,6 +2,9 @@
 body {
   background-color: green;
 }
+#playerContainer {
+  display: none;
+}
 </style>
 <script src="https://www.youtube.com/iframe_api"></script>
 <div id="playerContainer">
@@ -62,16 +65,20 @@ body {
   }
 
   function playNewVideo(videoId) {
-    if (videoEnded) {
-      videoEnded = false;
-      showPlayer();
-    }
+      if (videoEnded) {
+        videoEnded = false;
+        showPlayer();
+      }
 
-    if (player) {
-      player.loadVideoById(videoId);
-    } else {
-      loadYouTubePlayerAPI();
-    }
+      if (player) {
+        player.loadVideoById(videoId);
+        videoEnded = false;
+        showPlayer();
+      } else {
+        loadYouTubePlayerAPI();
+        videoEnded = false;
+        showPlayer();
+      }
   }
 
   function hidePlayer() {
