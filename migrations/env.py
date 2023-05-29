@@ -1,3 +1,6 @@
+import os
+import sys
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -6,7 +9,14 @@ from sqlalchemy import pool
 from src.database import metadata, Base
 from src.settings.settings import Settings
 
+from src.auth.models import *
+from src.chat.models import *
+from src.operations.models import *
+from src.playlist.models import *
+
 from alembic import context
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
