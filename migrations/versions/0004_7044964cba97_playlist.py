@@ -22,7 +22,6 @@ def upgrade() -> None:
         "playlist",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("track", sa.String(), nullable=True),
-        sa.Column("length", sa.Integer(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     # ### end Alembic commands ###

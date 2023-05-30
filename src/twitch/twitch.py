@@ -3,15 +3,15 @@ import re
 import twitchio
 import aiohttp
 import pytube
+import aioredis
 
 from pytube import YouTube
-from twitchio.ext import commands, pubsub
+from twitchio.ext import commands, pubsub, routines
 from dotenv import load_dotenv
 from typing import List
 
 from src.settings.settings import Settings
-from src.tasks.tasks import skip_track
-from src.twitch.utils import get_track_url
+from src.twitch.utils import get_answer
 
 load_dotenv()
 
@@ -20,7 +20,6 @@ my_token = os.environ.get('TWITCH_CHANNEL_ACCESS_TOKEN')
 INIT_CHANNELS = ["cubinec2012"]
 users_oauth_token = os.environ.get('TWITCH_CHANNEL_ACCESS_TOKEN')
 users_channel_id = 39312917
-reward_id = 0
 client = twitchio.Client(token=my_token, client_secret=os.environ.get('TWITCH_CLIENT_SECRET'))
 client.pubsub = pubsub.PubSubPool(client)
 
@@ -37,25 +36,27 @@ class Bot(commands.Bot):
 
     @client.event()
     async def event_pubsub_channel_points(event: pubsub.PubSubChannelPointsMessage):
-        if event.reward.title == 'Заказать Трек':
+        channel = bot.get_channel('cubinec2012')
+        if event.reward.id == '398f81af-6d5b-4f78-b38d-f66246796867':
             link = event.input
             reward_redemptions_list = await event.reward.get_redemptions(token=users_oauth_token, status='UNFULFILLED')
-            channel = bot.get_channel('cubinec2012')
             if re.match('^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?' \
                         'v=|embed\/|v\/)?)([\w\-]+)(\S+)?$', link):
                 track = YouTube(link)
                 url = f'{Settings.SERVER_URL}/api/v1/playlist'
-                data = {'track': link, "length": track.length}
+                data = {'track': link}
                 try:
                     any(stream.is_live for stream in track.streams)
                 except pytube.exceptions.LiveStreamError:
                     await reward_redemptions_list[-1].refund(token=users_oauth_token)
                     await channel.send(f'@{event.user.name} Только треки, не онлайн стримы!')
-                    return
+
                 if track.length > 300:
                     await reward_redemptions_list[-1].refund(token=users_oauth_token)
-                    await channel.send(f'@{event.user.name} Трек {track.streams[0].title} слишком длинный, не длинее 5 минут!')
-                    return
+                    await channel.send(
+                        f'@{event.user.name} Трек {track.streams[0].title} слишком длинный, не длинее 5 минут!'
+                    )
+
                 async with aiohttp.ClientSession() as session:
                     async with session.post(url, json=data) as resp:
                         await resp.text()
@@ -64,17 +65,17 @@ class Bot(commands.Bot):
             else:
                 await reward_redemptions_list[-1].refund(token=users_oauth_token)
                 await channel.send(f'@{event.user.name} только youtube ссылки PixelBob')
-        elif event.reward.title == 'Скип':
-            pass
+        elif event.reward.id == '6c5a880c-2b04-492f-8530-0551399181f8':
+            reward_redemptions_list = await event.reward.get_redemptions(token=users_oauth_token, status='UNFULFILLED')
+            await reward_redemptions_list[-1].fulfill(token=users_oauth_token)
+            await get_answer(event, channel, reward=True)
 
     @commands.command(name='скип')
     async def skip_track(self, ctx: commands.Context):
         if ctx.author.name == "cubinec2012":
+            self.users_votes_skip.clear()
             self.skip_count = 0
-            data = await get_track_url()
-            track = YouTube(data.track)
-            skip_track.delay(data.track)
-            await ctx.channel.send(f'@{ctx.author.name} Скипнул на {track.streams[0].title}!')
+            await get_answer(ctx)
         elif self.skip_count < 5 and ctx.author.name not in self.users_votes_skip:
             self.users_votes_skip.append(ctx.author.name)
             self.skip_count += 1
@@ -84,10 +85,32 @@ class Bot(commands.Bot):
         elif self.skip_count > 4 and ctx.author.name not in self.users_votes_skip:
             self.users_votes_skip.clear()
             self.skip_count = 0
-            data = await get_track_url()
-            track = YouTube(data.track)
-            skip_track.delay(data.track)
-            await ctx.channel.send(f'Трек успешно скипнут на {track.streams[0].title}!')
+            await get_answer(ctx)
+
+    @commands.command(name='трек')
+    async def track_info(self, ctx: commands.Context):
+        redis = await aioredis.from_url(Settings.REDIS_URL)
+        track_url = await redis.get('video_url')
+        if track_url and track_url.decode('utf-8') != 'False':
+            track = YouTube(track_url.decode('utf-8'))
+            await ctx.channel.send(f'Текущий трек: {track.streams[0].title}')
+        else:
+            await ctx.channel.send(f'Сейчас ни один трек не воспроизводится!')
+
+    @routines.routine(minutes=5)
+    async def info(self):
+        channel = bot.get_channel('cubinec2012')
+        await channel.send(
+            'За балы канала доступен заказ, скип треков! ' \
+            'Так же, доступен скип трека по команде !скип в чат!'
+        )
+
+    @routines.routine(minutes=2)
+    async def info(self):
+        channel = bot.get_channel('cubinec2012')
+        await channel.send(
+            'Текущий список комманд: !трек, !скип'
+        )
 
     async def event_ready(self) -> None:
         print(f"Logged in as | {self.nick}")

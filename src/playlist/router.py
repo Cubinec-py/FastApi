@@ -1,3 +1,5 @@
+import aioredis
+
 from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect
 from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +8,7 @@ from pytube import extract, YouTube
 from src.database import get_async_session
 from src.playlist.models import Playlist
 from src.playlist.schemas import PlaylistCreate
+from src.twitch.utils import next_track as celery_next_track, get_tracks_count
 
 from src.settings.settings import Settings, templates
 from src.settings.ws_conf import ConnectionManager
@@ -31,6 +34,8 @@ async def add_to_playlist(playlist: PlaylistCreate, session: AsyncSession = Depe
     stmt = insert(Playlist).values(**playlist.dict())
     await session.execute(stmt)
     await session.commit()
+    if await get_tracks_count() == 1:
+        await celery_next_track()
     return {"status": "201 success"}
 
 
@@ -66,6 +71,9 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            print(f"Received data from client: {data}")
+            if str(data) == 'video_ended':
+                redis = await aioredis.from_url(Settings.REDIS_URL)
+                await redis.set('video_url', 'False')
+                await celery_next_track()
     except WebSocketDisconnect:
         await ws_manager.disconnect(websocket)

@@ -1,9 +1,9 @@
 import smtplib
 import requests
+import redis
 
 from celery import Celery
 
-from src.twitch.utils import get_track_url
 from src.tasks.utils import get_user_email_template
 from src.settings.settings import Settings
 
@@ -21,9 +21,11 @@ def send_mail(username: str):
 @celery.task
 def skip_track(video_url: str):
     data = {"url": video_url}
-    requests.post(f"{Settings.SERVER_URL}/api/v1/playlist/song_add", params=data)
+    set_current_track(video_url)
+    req = requests.post(f"{Settings.SERVER_URL}/api/v1/playlist/song_add", params=data)
+    return print(req.json())
 
 
-async def next_track():
-    data = await get_track_url()
-    skip_track.apply_async(data.track)
+def set_current_track(video_url: str):
+    r = redis.Redis.from_url(Settings.REDIS_URL)
+    r.set('video_url', video_url)

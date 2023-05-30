@@ -8,4 +8,3 @@ class Playlist(Base):
 
     id = Column(Integer, primary_key=True)
     track = Column(String)
-    length = Column(Integer)

@@ -15,6 +15,7 @@ body {
   let player;
   let socket = new WebSocket("{{ WS_URL }}/api/v1/playlist/ws");
   let videoEnded = false;
+  let MESSAGE_videoEnded = "video_ended";
   const API_KEY = "{{ API_KEY }}";
 
   function loadYouTubePlayerAPI() {
@@ -54,6 +55,7 @@ body {
     });
   }
   function onPlayerReady(event) {
+    event.target.setVolume(30);
     event.target.playVideo();
   }
 
@@ -61,6 +63,7 @@ body {
     if (event.data === YT.PlayerState.ENDED) {
       videoEnded = true;
       hidePlayer();
+      socket.send('video_ended');
     }
   }
 
@@ -90,10 +93,12 @@ body {
   }
 
   socket.onmessage = function(event) {
-    let newVideoId = event.data;
-    console.log(newVideoId);
-    if (newVideoId) {
-      playNewVideo(newVideoId);
+    if (event.data !== MESSAGE_videoEnded) {
+      let newVideoId = event.data;
+      console.log(newVideoId);
+      if (newVideoId) {
+        playNewVideo(newVideoId);
+      }
     }
   };
 
