@@ -1,5 +1,5 @@
 from fastapi import WebSocket
-from sqlalchemy import insert, delete, select
+from sqlalchemy import insert, delete
 
 from src.database import async_session_maker
 from src.chat.models import Message
@@ -33,11 +33,14 @@ class ConnectionManager:
             await self.remove_host_port_from_database()
         self.active_connections.remove(websocket)
 
-    async def broadcast(self, message: str, add_to_db: bool = False):
+    async def broadcast(self, message: str, ws: WebSocket = False, add_to_db: bool = False):
         if add_to_db:
             await self.add_messages_to_database(message)
-        for connection in self.active_connections:
-            await connection.send_text(message)
+        if not ws:
+            for connection in self.active_connections:
+                await connection.send_text(message)
+        else:
+            await ws.send_text(message)
 
     @staticmethod
     async def add_messages_to_database(message: str):

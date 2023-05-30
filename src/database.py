@@ -1,3 +1,5 @@
+import aioredis
+
 from typing import AsyncGenerator
 
 from sqlalchemy import MetaData
@@ -20,3 +22,7 @@ async_session_maker = sessionmaker(
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_maker() as session:
         yield session
+
+
+async def create_redis_pool():
+    return await aioredis.from_url(Settings.REDIS_URL)

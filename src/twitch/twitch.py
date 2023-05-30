@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from typing import List
 
 from src.settings.settings import Settings
-from src.twitch.utils import get_answer
+from src.twitch.utils import get_answer, start_current_track
 
 load_dotenv()
 
@@ -97,24 +97,25 @@ class Bot(commands.Bot):
         else:
             await ctx.channel.send(f'Сейчас ни один трек не воспроизводится!')
 
-    @routines.routine(minutes=5)
+    @commands.command(name='cтарт')
+    async def track_start(self, ctx: commands.Context):
+        if ctx.author.name == "cubinec2012":
+            await start_current_track(ctx)
+        else:
+            await ctx.channel.send(f'@{ctx.author.name} У тебя нет прав PixelBob')
+
+    @routines.routine(minutes=3)
     async def info(self):
         channel = bot.get_channel('cubinec2012')
         await channel.send(
             'За балы канала доступен заказ, скип треков! ' \
-            'Так же, доступен скип трека по команде !скип в чат!'
-        )
-
-    @routines.routine(minutes=2)
-    async def info(self):
-        channel = bot.get_channel('cubinec2012')
-        await channel.send(
-            'Текущий список комманд: !трек, !скип'
+            'Так же, доступны команды: !трек, !скип в чате!'
         )
 
     async def event_ready(self) -> None:
         print(f"Logged in as | {self.nick}")
         print(f"User id is | {self.user_id}")
+        self.info.start()
 
 
 bot = Bot()

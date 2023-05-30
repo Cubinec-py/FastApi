@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
 from starlette.background import BackgroundTasks
-from fastapi.responses import JSONResponse
 
 from src.auth.base_config import current_user
 from src.tasks.tasks import send_mail
@@ -9,7 +8,7 @@ from src.auth.base_config import current_active_user
 
 router = APIRouter(
     prefix="/tasks",
-    # dependencies=[Depends(current_active_user)],
+    dependencies=[Depends(current_active_user)],
     tags=["Tasks"],
 )
 

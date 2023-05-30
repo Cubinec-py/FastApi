@@ -5,7 +5,7 @@ from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from pytube import extract, YouTube
 
-from src.database import get_async_session
+from src.database import get_async_session, create_redis_pool
 from src.playlist.models import Playlist
 from src.playlist.schemas import PlaylistCreate
 from src.twitch.utils import next_track as celery_next_track, get_tracks_count
@@ -19,7 +19,7 @@ router = APIRouter(
 )
 
 ws_manager = ConnectionManager()
-current_video_id = '1IFnKHhBv7w'
+channel_name = 'websocket_channel'
 
 
 @router.get("")
@@ -57,7 +57,8 @@ async def play_new_video(url: str):
     age_permission = extract.is_age_restricted(url)
     private = extract.is_private(url)
     lenth = YouTube(url)
-    await ws_manager.broadcast(video_id)
+    redis = await create_redis_pool()
+    await redis.publish(channel_name, video_id)
     return {
         "message": f"New video started: {video_id}",
         "video_lenth": lenth.length,
@@ -67,13 +68,24 @@ async def play_new_video(url: str):
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    redis = await create_redis_pool()
+    pubsub = redis.pubsub()
+    await pubsub.subscribe(channel_name)
     await ws_manager.connect(websocket)
     try:
         while True:
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    data = message["data"].decode()
+                    await websocket.send_text(data)
             data = await websocket.receive_text()
+            await redis.publish(channel_name, data)
             if str(data) == 'video_ended':
                 redis = await aioredis.from_url(Settings.REDIS_URL)
                 await redis.set('video_url', 'False')
                 await celery_next_track()
     except WebSocketDisconnect:
         await ws_manager.disconnect(websocket)
+    finally:
+        await pubsub.unsubscribe(channel_name)
+        await pubsub.close()

@@ -1,11 +1,7 @@
-import aioredis
-
-from src.database import async_session_maker
+from src.database import async_session_maker, create_redis_pool
 from sqlalchemy import select, delete, func
 from src.playlist.models import Playlist
 from src.tasks.tasks import skip_track
-
-from src.settings.settings import Settings
 
 
 async def get_track_url():
@@ -30,15 +26,16 @@ async def get_tracks_count():
 
 
 async def next_track():
-    redis = await aioredis.from_url(Settings.REDIS_URL)
+    redis = await create_redis_pool()
     r = await redis.get('video_url')
     if r is None or r.decode('utf-8') == 'False':
         data = await get_track_url()
         if data is not None:
             skip_track.delay(f'{data.track}')
-            return 'Success'
+            return data.track
         await redis.set('video_url', 'False')
-        return 'No track'
+        return False
+    return False
 
 
 async def get_answer(ctx, channel=None, reward: bool = False):
@@ -56,3 +53,22 @@ async def get_answer(ctx, channel=None, reward: bool = False):
             await channel.send(f'В плейлисте больше нет треков!')
         else:
             await ctx.channel.send(f'В плейлисте больше нет треков!')
+
+
+async def start_current_track(ctx):
+    from pytube import YouTube
+    redis = await create_redis_pool()
+    r = await redis.get('video_url')
+    if r is not None or r.decode('utf-8') != 'False':
+        track_url = r.decode('utf-8')
+        skip_track.delay(f'{track_url}')
+        track = YouTube(track_url)
+        await ctx.channel.send(f'Трек {track.streams[0].title} запущен')
+    elif r is None or r.decode('utf-8') == 'False':
+        track_url = await next_track()
+        if track_url:
+            track = YouTube(track_url)
+            await ctx.channel.send(f'Трек {track.streams[0].title} запущен')
+        else:
+            await ctx.channel.send(f'Запускать нечего')
+    await ctx.channel.send(f'Что-то пошло не так')
