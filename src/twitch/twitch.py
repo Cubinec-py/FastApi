@@ -17,9 +17,9 @@ load_dotenv()
 
 
 my_token = os.environ.get('TWITCH_CHANNEL_ACCESS_TOKEN')
-INIT_CHANNELS = ["cubinec2012"]
+INIT_CHANNELS = os.environ.get('INIT_CHANNELS')
 users_oauth_token = os.environ.get('TWITCH_CHANNEL_ACCESS_TOKEN')
-users_channel_id = 39312917
+users_channel_id = int(os.environ.get('USER_CHANNEL_ID'))
 client = twitchio.Client(token=my_token, client_secret=os.environ.get('TWITCH_CLIENT_SECRET'))
 client.pubsub = pubsub.PubSubPool(client)
 
@@ -104,7 +104,7 @@ class Bot(commands.Bot):
         else:
             await ctx.channel.send(f'@{ctx.author.name} У тебя нет прав PixelBob')
 
-    @routines.routine(minutes=3)
+    @routines.routine(minutes=10)
     async def info(self):
         channel = bot.get_channel('cubinec2012')
         await channel.send(
