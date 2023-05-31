@@ -18,20 +18,23 @@ body {
   let videoEnded = false;
   let MESSAGE_videoEnded = "video_ended";
   const API_KEY = "{{ API_KEY }}";
-  let xhr = new XMLHttpRequest();
-  xhr.open('POST', url, true);
-  xhr.setRequestHeader('accept', 'application/json');
+  const request= ()=>{
+    return fetch(
+      url,{
+        method:"POST",
+        headers:{
+          'Content-Type': 'application/json'
+        },
+        body:JSON.stringify("{}")
+      }
+    ).then(response=>response.json())
+    .catch(e=>{console.error{
+      "Error:",e
+    }})
+  }
 
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState === 4 && xhr.status === 200) {
-      let response = JSON.parse(xhr.responseText);
-      // Handle the response data
-      console.log(response);
-    } else if (xhr.readyState === 4) {
-      // Handle any errors
-      console.error('Error:', xhr.status);
-    }
-  };
+
+
 
   function loadYouTubePlayerAPI() {
     const tag = document.createElement('script');
