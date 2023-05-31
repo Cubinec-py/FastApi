@@ -28,9 +28,10 @@ body {
         body:JSON.stringify("{}")
       }
     ).then(response=>response.json())
-    .catch(e=>{console.error{
-      "Error:",e
-    }})
+    .catch(e=>{
+      console.error('Error:', error);
+    throw error;
+     })
   }
 
 
