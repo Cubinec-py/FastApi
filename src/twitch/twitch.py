@@ -17,7 +17,7 @@ load_dotenv()
 
 
 my_token = os.environ.get('TWITCH_CHANNEL_ACCESS_TOKEN')
-INIT_CHANNELS = os.environ.get('INIT_CHANNELS')
+INIT_CHANNELS = ["cubinec2012"]
 users_oauth_token = os.environ.get('TWITCH_CHANNEL_ACCESS_TOKEN')
 users_channel_id = int(os.environ.get('USER_CHANNEL_ID'))
 client = twitchio.Client(token=my_token, client_secret=os.environ.get('TWITCH_CLIENT_SECRET'))
@@ -97,7 +97,7 @@ class Bot(commands.Bot):
         else:
             await ctx.channel.send(f'Сейчас ни один трек не воспроизводится!')
 
-    @commands.command(name='cтарт')
+    @commands.command(name='старт')
     async def track_start(self, ctx: commands.Context):
         if ctx.author.name == "cubinec2012":
             await start_current_track(ctx)

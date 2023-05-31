@@ -14,9 +14,24 @@ body {
 <script>
   let player;
   let socket = new WebSocket("{{ WS_URL }}/api/v1/playlist/ws");
+  let url = "{{ url_ended }}";
   let videoEnded = false;
   let MESSAGE_videoEnded = "video_ended";
   const API_KEY = "{{ API_KEY }}";
+  let xhr = new XMLHttpRequest();
+  xhr.open('POST', url, true);
+  xhr.setRequestHeader('accept', 'application/json');
+
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      let response = JSON.parse(xhr.responseText);
+      // Handle the response data
+      console.log(response);
+    } else if (xhr.readyState === 4) {
+      // Handle any errors
+      console.error('Error:', xhr.status);
+    }
+  };
 
   function loadYouTubePlayerAPI() {
     const tag = document.createElement('script');
@@ -63,7 +78,13 @@ body {
     if (event.data === YT.PlayerState.ENDED) {
       videoEnded = true;
       hidePlayer();
-      socket.send('video_ended');
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
     }
   }
 
@@ -93,6 +114,7 @@ body {
   }
 
   socket.onmessage = function(event) {
+    console.log('event', event);
     if (event.data !== MESSAGE_videoEnded) {
       let newVideoId = event.data;
       console.log(newVideoId);

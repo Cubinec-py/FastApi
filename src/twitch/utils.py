@@ -59,7 +59,7 @@ async def start_current_track(ctx):
     from pytube import YouTube
     redis = await create_redis_pool()
     r = await redis.get('video_url')
-    if r is not None or r.decode('utf-8') != 'False':
+    if r is not None and r.decode('utf-8') != 'False':
         track_url = r.decode('utf-8')
         skip_track.delay(f'{track_url}')
         track = YouTube(track_url)
@@ -71,4 +71,5 @@ async def start_current_track(ctx):
             await ctx.channel.send(f'Трек {track.streams[0].title} запущен')
         else:
             await ctx.channel.send(f'Запускать нечего')
-    await ctx.channel.send(f'Что-то пошло не так')
+    else:
+        await ctx.channel.send(f'Что-то пошло не так')

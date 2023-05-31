@@ -47,6 +47,7 @@ async def get_video_page(request: Request):
             "request": request,
             "API_KEY": Settings.YOUTUBE_API_KEY,
             "video_id": '',
+            "url_ended": f'{Settings.SERVER_URL}/api/v1/playlist/video_ended?ended=true',
             "WS_URL": Settings.WS_URL,
         })
 
@@ -66,6 +67,17 @@ async def play_new_video(url: str):
     }
 
 
+@router.post("/video_ended")
+async def video_ended(ended: bool):
+    print(ended)
+    if ended:
+        redis = await create_redis_pool()
+        await redis.set('video_url', 'False')
+        await celery_next_track()
+        return {"status": "201 success"}
+    return {"status": "ERROR invalid data"}
+
+
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     redis = await create_redis_pool()
@@ -76,14 +88,10 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             async for message in pubsub.listen():
                 if message["type"] == "message":
-                    data = message["data"].decode()
-                    await websocket.send_text(data)
+                    data_send = message["data"].decode()
+                    await websocket.send_text(data_send)
             data = await websocket.receive_text()
             await redis.publish(channel_name, data)
-            if str(data) == 'video_ended':
-                redis = await aioredis.from_url(Settings.REDIS_URL)
-                await redis.set('video_url', 'False')
-                await celery_next_track()
     except WebSocketDisconnect:
         await ws_manager.disconnect(websocket)
     finally:
