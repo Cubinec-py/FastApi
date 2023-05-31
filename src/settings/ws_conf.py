@@ -1,3 +1,5 @@
+import websockets
+
 from fastapi import WebSocket
 from sqlalchemy import insert, delete
 
@@ -38,7 +40,10 @@ class ConnectionManager:
             await self.add_messages_to_database(message)
         if not ws:
             for connection in self.active_connections:
-                await connection.send_text(message)
+                try:
+                    await connection.send_text(message)
+                except websockets.exceptions.ConnectionClosedOK:
+                    pass
         else:
             await ws.send_text(message)
 

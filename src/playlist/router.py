@@ -69,7 +69,6 @@ async def play_new_video(url: str):
 
 @router.post("/video_ended")
 async def video_ended(ended: bool):
-    print(ended)
     if ended:
         redis = await create_redis_pool()
         await redis.set('video_url', 'False')
@@ -89,7 +88,7 @@ async def websocket_endpoint(websocket: WebSocket):
             async for message in pubsub.listen():
                 if message["type"] == "message":
                     data_send = message["data"].decode()
-                    await websocket.send_text(data_send)
+                    await ws_manager.broadcast(data_send)
             data = await websocket.receive_text()
             await redis.publish(channel_name, data)
     except WebSocketDisconnect:
