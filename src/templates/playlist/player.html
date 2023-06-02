@@ -17,6 +17,7 @@ body {
   let url = "{{ url_ended }}";
   let videoEnded = false;
   let MESSAGE_videoEnded = "video_ended";
+  let SKIP_TRACK = "skip_track";
   const API_KEY = "{{ API_KEY }}";
   const request= ()=>{
     return fetch(
@@ -25,17 +26,14 @@ body {
         headers:{
           'Content-Type': 'application/json'
         },
-        body:JSON.stringify("{}")
+        body:JSON.stringify({})
       }
     ).then(response=>response.json())
-    .catch(e=>{
+    .catch(error=>{
       console.error('Error:', error);
     throw error;
      })
   }
-
-
-
 
   function loadYouTubePlayerAPI() {
     const tag = document.createElement('script');
@@ -43,12 +41,6 @@ body {
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
   }
-  // function loadYouTubePlayerAPI() {
-  //   const tag = document.createElement('script');
-  //   tag.src = `https://www.youtube.com/iframe_api?api=${API_KEY}`;
-  //   const firstScriptTag = document.getElementsByTagName('script')[0];
-  //   firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-  // }
 
   loadYouTubePlayerAPI();
 
@@ -82,13 +74,7 @@ body {
     if (event.data === YT.PlayerState.ENDED) {
       videoEnded = true;
       hidePlayer();
-      fetch(url, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json'
-        },
-        body: JSON.stringify({})
-      });
+      request();
     }
   }
 
@@ -118,13 +104,18 @@ body {
   }
 
   socket.onmessage = function(event) {
-    console.log('event', event);
-    if (event.data !== MESSAGE_videoEnded) {
+    if (event.data !== MESSAGE_videoEnded && event.data !== SKIP_TRACK) {
       let newVideoId = event.data;
       console.log(newVideoId);
       if (newVideoId) {
         playNewVideo(newVideoId);
       }
+    } else if (event.data === SKIP_TRACK) {
+      console.log("skip track 123");
+      if (player) {
+        player.stopVideo();
+      }
+      hidePlayer();
     }
   };
 

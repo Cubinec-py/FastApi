@@ -2,16 +2,14 @@ import os
 import re
 import twitchio
 import aiohttp
-import pytube
 import aioredis
 
-from pytube import YouTube
 from twitchio.ext import commands, pubsub, routines
 from dotenv import load_dotenv
 from typing import List
 
 from src.settings.settings import Settings
-from src.twitch.utils import get_answer, start_current_track
+from src.twitch.utils import get_answer, start_current_track, check_stream_or_not, get_track_title, get_track_length
 
 load_dotenv()
 
@@ -38,30 +36,30 @@ class Bot(commands.Bot):
     async def event_pubsub_channel_points(event: pubsub.PubSubChannelPointsMessage):
         channel = bot.get_channel('cubinec2012')
         if event.reward.id == '398f81af-6d5b-4f78-b38d-f66246796867':
+            yt_regex_url = re.compile(r'^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$')
             link = event.input
             reward_redemptions_list = await event.reward.get_redemptions(token=users_oauth_token, status='UNFULFILLED')
-            if re.match('^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?' \
-                        'v=|embed\/|v\/)?)([\w\-]+)(\S+)?$', link):
-                track = YouTube(link)
+            if yt_regex_url.match(link):
                 url = f'{Settings.SERVER_URL}/api/v1/playlist'
                 data = {'track': link}
-                try:
-                    any(stream.is_live for stream in track.streams)
-                except pytube.exceptions.LiveStreamError:
+                title = await get_track_title(link)
+                if await check_stream_or_not(link):
                     await reward_redemptions_list[-1].refund(token=users_oauth_token)
                     await channel.send(f'@{event.user.name} Только треки, не онлайн стримы!')
+                    return
 
-                if track.length > 300:
+                if await get_track_length(link) > 300:
                     await reward_redemptions_list[-1].refund(token=users_oauth_token)
                     await channel.send(
-                        f'@{event.user.name} Трек {track.streams[0].title} слишком длинный, не длинее 5 минут!'
+                        f'@{event.user.name} Трек {title} слишком длинный, не длинее 5 минут!'
                     )
+                    return
 
                 async with aiohttp.ClientSession() as session:
                     async with session.post(url, json=data) as resp:
                         await resp.text()
                 await reward_redemptions_list[-1].fulfill(token=users_oauth_token)
-                await channel.send(f'@{event.user.name} Трек {track.streams[0].title} успешно добавлен в плейлист!')
+                await channel.send(f'@{event.user.name} Трек {title} успешно добавлен в плейлист!')
             else:
                 await reward_redemptions_list[-1].refund(token=users_oauth_token)
                 await channel.send(f'@{event.user.name} только youtube ссылки PixelBob')
@@ -92,8 +90,8 @@ class Bot(commands.Bot):
         redis = await aioredis.from_url(Settings.REDIS_URL)
         track_url = await redis.get('video_url')
         if track_url and track_url.decode('utf-8') != 'False':
-            track = YouTube(track_url.decode('utf-8'))
-            await ctx.channel.send(f'Текущий трек: {track.streams[0].title}')
+            title = await get_track_title(track_url.decode('utf-8'))
+            await ctx.channel.send(f'Текущий трек: {title}')
         else:
             await ctx.channel.send(f'Сейчас ни один трек не воспроизводится!')
 

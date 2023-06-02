@@ -4,8 +4,10 @@ import multiprocessing
 from pydantic import BaseSettings, Extra, Field
 
 origins = [
-    "http://80.92.206.218:8000",
-    "https://www.youtube.com/"
+    "http://80.92.206.218:8000/",
+    "https://www.youtube.com/",
+    "http://govnokod.online:8000/",
+    "*"
 ]
 
 

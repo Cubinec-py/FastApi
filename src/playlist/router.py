@@ -3,12 +3,11 @@ import aioredis
 from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect
 from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
-from pytube import extract, YouTube
 
 from src.database import get_async_session, create_redis_pool
 from src.playlist.models import Playlist
 from src.playlist.schemas import PlaylistCreate
-from src.twitch.utils import next_track as celery_next_track, get_tracks_count
+from src.twitch.utils import next_track as celery_next_track, get_tracks_count, get_track_id, get_track_length
 
 from src.settings.settings import Settings, templates
 from src.settings.ws_conf import ConnectionManager
@@ -54,25 +53,21 @@ async def get_video_page(request: Request):
 
 @router.post("/song_add")
 async def play_new_video(url: str):
-    video_id = extract.video_id(url)
-    age_permission = extract.is_age_restricted(url)
-    private = extract.is_private(url)
-    lenth = YouTube(url)
+    video_id = get_track_id(url)
+    lenth = await get_track_length(url)
     redis = await create_redis_pool()
     await redis.publish(channel_name, video_id)
     return {
         "message": f"New video started: {video_id}",
-        "video_lenth": lenth.length,
-        "data": [age_permission, private]
+        "video_lenth": lenth,
     }
 
 
 @router.post("/video_ended")
 async def video_ended(ended: bool):
     if ended:
-        redis = await create_redis_pool()
-        await redis.set('video_url', 'False')
-        await celery_next_track()
+        print('video_ended')
+        await celery_next_track(ended=True)
         return {"status": "201 success"}
     return {"status": "ERROR invalid data"}
 

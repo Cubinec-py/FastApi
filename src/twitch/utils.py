@@ -1,7 +1,15 @@
+import aiohttp
+import re
+import isodate
+
 from src.database import async_session_maker, create_redis_pool
 from sqlalchemy import select, delete, func
 from src.playlist.models import Playlist
 from src.tasks.tasks import skip_track
+
+from src.settings.settings import Settings
+
+channel_name = 'websocket_channel'
 
 
 async def get_track_url():
@@ -25,10 +33,10 @@ async def get_tracks_count():
     return track_count
 
 
-async def next_track():
+async def next_track(ended: bool = False):
     redis = await create_redis_pool()
     r = await redis.get('video_url')
-    if r is None or r.decode('utf-8') == 'False':
+    if r is None or r.decode('utf-8') == 'False' or ended:
         data = await get_track_url()
         if data is not None:
             skip_track.delay(f'{data.track}')
@@ -41,35 +49,81 @@ async def next_track():
 async def get_answer(ctx, channel=None, reward: bool = False):
     data = await get_track_url()
     if data is not None:
-        from pytube import YouTube
-        track = YouTube(data.track)
+        title = await get_track_title(data.track)
         skip_track.delay(f'{data.track}')
         if reward:
-            await channel.send(f'Трек скипнут на {track.streams[0].title}!')
+            await channel.send(f'Трек скипнут на {title}!')
         else:
-            await ctx.channel.send(f'Трек скипнут на {track.streams[0].title}!')
+            await ctx.channel.send(f'Трек скипнут на {title}!')
     else:
+        redis = await create_redis_pool()
+        track_url = await redis.get('video_url')
+        print('track_url', track_url)
+        title = False
+        if track_url is not None and track_url.decode('utf-8') != 'False':
+            title = await get_track_title(track_url.decode('utf-8'))
+        await redis.set('video_url', 'False')
+        await redis.publish(channel_name, 'skip_track')
         if reward:
-            await channel.send(f'В плейлисте больше нет треков!')
+            if title:
+                await channel.send(f'Трек {title} скипнут но в плейлисте больше нет треков!')
+                return
+            await channel.send(f'В плейлисте нет треков!')
         else:
-            await ctx.channel.send(f'В плейлисте больше нет треков!')
+            if title:
+                await ctx.channel.send(f'Трек {title} скипнут но в плейлисте больше нет треков!')
+                return
+            await ctx.channel.send(f'В плейлисте нет треков!')
 
 
 async def start_current_track(ctx):
-    from pytube import YouTube
     redis = await create_redis_pool()
     r = await redis.get('video_url')
     if r is not None and r.decode('utf-8') != 'False':
         track_url = r.decode('utf-8')
         skip_track.delay(f'{track_url}')
-        track = YouTube(track_url)
-        await ctx.channel.send(f'Трек {track.streams[0].title} запущен')
+        title = await get_track_title(track_url)
+        await ctx.channel.send(f'Трек {title} запущен')
     elif r is None or r.decode('utf-8') == 'False':
         track_url = await next_track()
         if track_url:
-            track = YouTube(track_url)
-            await ctx.channel.send(f'Трек {track.streams[0].title} запущен')
+            title = await get_track_title(track_url)
+            await ctx.channel.send(f'Трек {title} запущен')
         else:
             await ctx.channel.send(f'Запускать нечего')
     else:
         await ctx.channel.send(f'Что-то пошло не так')
+
+
+async def get_track_info(url: str) -> dict:
+    video_id = get_track_id(url)
+    api_key = Settings.YOUTUBE_API_KEY
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&key={api_key}&part=snippet,contentDetails,statistics,status") as response:
+            data = await response.json()
+    return data
+
+
+def get_track_id(url: str) -> str:
+    regex = re.compile(r'(https?://)?(www\.)?(m\.)?(?:youtube\.com\/\S*(?:(?:\/e(?:mbed))?\/|watch\?(?:\S*?&?v\=))|youtu\.be\/)?(?P<id>[A-Za-z0-9\-=_]{11})')
+    match = regex.match(url)
+    video_id = match.group('id')
+    return video_id
+
+
+async def check_stream_or_not(url: str) -> bool:
+    data = await get_track_info(url)
+    stream = isodate.parse_duration(data['items'][0]['contentDetails']['duration']).seconds
+    return True if stream <= 0 else False
+
+
+async def get_track_title(url: str) -> str:
+    data = await get_track_info(url)
+    title = data['items'][0]['snippet']['title']
+    return title
+
+
+async def get_track_length(url: str) -> int:
+    data = await get_track_info(url)
+    duration = isodate.parse_duration(data['items'][0]['contentDetails']['duration']).seconds
+    return int(duration)

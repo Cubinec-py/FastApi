@@ -51,6 +51,8 @@ class Settings(BaseSettings):
     SMTP_PORT: int = Field()
     SMTP_USER: str = Field()
     SMTP_PASSWORD: str = Field()
+    # Youtube API_KEY
+    YOUTUBE_API_KEY: str = Field()
 
     class Config(BaseSettings.Config):
         extra = Extra.ignore
