@@ -1,12 +1,10 @@
-import aioredis
-
 from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect
 from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_async_session, create_redis_pool
 from src.playlist.models import Playlist
-from src.playlist.schemas import PlaylistCreate
+from src.playlist.schemas import PlaylistCreate, VideoUrl
 from src.twitch.utils import next_track as celery_next_track, get_tracks_count, get_track_id, get_track_length
 
 from src.settings.settings import Settings, templates
@@ -52,21 +50,20 @@ async def get_video_page(request: Request):
 
 
 @router.post("/song_add")
-async def play_new_video(url: str):
-    video_id = get_track_id(url)
-    lenth = await get_track_length(url)
+async def play_new_video(url: VideoUrl):
+    video_id = get_track_id(url.dict()['video_url'])
+    length = await get_track_length(url.dict()['video_url'])
     redis = await create_redis_pool()
     await redis.publish(channel_name, video_id)
     return {
-        "message": f"New video started: {video_id}",
-        "video_lenth": lenth,
+        "message": f'New video started: {video_id}',
+        "video_length": length,
     }
 
 
 @router.post("/video_ended")
 async def video_ended(ended: bool):
     if ended:
-        print('video_ended')
         await celery_next_track(ended=True)
         return {"status": "201 success"}
     return {"status": "ERROR invalid data"}

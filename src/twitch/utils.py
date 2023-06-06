@@ -58,7 +58,6 @@ async def get_answer(ctx, channel=None, reward: bool = False):
     else:
         redis = await create_redis_pool()
         track_url = await redis.get('video_url')
-        print('track_url', track_url)
         title = False
         if track_url is not None and track_url.decode('utf-8') != 'False':
             title = await get_track_title(track_url.decode('utf-8'))
@@ -68,12 +67,12 @@ async def get_answer(ctx, channel=None, reward: bool = False):
             if title:
                 await channel.send(f'Трек {title} скипнут но в плейлисте больше нет треков!')
                 return
-            await channel.send(f'В плейлисте нет треков!')
+            await channel.send('В плейлисте нет треков!')
         else:
             if title:
                 await ctx.channel.send(f'Трек {title} скипнут но в плейлисте больше нет треков!')
                 return
-            await ctx.channel.send(f'В плейлисте нет треков!')
+            await ctx.channel.send('В плейлисте нет треков!')
 
 
 async def start_current_track(ctx):
@@ -90,16 +89,17 @@ async def start_current_track(ctx):
             title = await get_track_title(track_url)
             await ctx.channel.send(f'Трек {title} запущен')
         else:
-            await ctx.channel.send(f'Запускать нечего')
+            await ctx.channel.send('Запускать нечего')
     else:
-        await ctx.channel.send(f'Что-то пошло не так')
+        await ctx.channel.send('Что-то пошло не так')
 
 
 async def get_track_info(url: str) -> dict:
     video_id = get_track_id(url)
     api_key = Settings.YOUTUBE_API_KEY
+    url = f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&key={api_key}"
     async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&key={api_key}&part=snippet,contentDetails,statistics,status") as response:
+        async with session.get(f'{url}&part=snippet,contentDetails,statistics,status') as response:
             data = await response.json()
     return data
 
@@ -127,3 +127,13 @@ async def get_track_length(url: str) -> int:
     data = await get_track_info(url)
     duration = isodate.parse_duration(data['items'][0]['contentDetails']['duration']).seconds
     return int(duration)
+
+
+async def add_track_to_playlist(video_url):
+    url = f'{Settings.SERVER_URL}/api/v1/playlist'
+    data = {'track': video_url}
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=data) as resp:
+            status = resp.status
+            await resp.json()
+    return status

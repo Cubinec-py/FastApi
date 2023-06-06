@@ -2,8 +2,16 @@ from httpx import AsyncClient
 
 
 async def test_add_specific_operations(ac: AsyncClient):
+    token = await ac.post(
+        "/api/v1/login",
+        json={
+            "email": "string@example.com",
+            "password": "string",
+        }
+    )
     response = await ac.post(
-        "/api/operations",
+        "/api/v1/operations",
+        headers={"accept": "application/json", "Authorization": f"Bearer {token.json()['access_token']}"},
         json={
             "id": 1,
             "quantity": "25.5",
@@ -17,8 +25,16 @@ async def test_add_specific_operations(ac: AsyncClient):
 
 
 async def test_get_specific_operations(ac: AsyncClient):
+    token = await ac.post(
+        "/api/v1/login",
+        json={
+            "email": "string@example.com",
+            "password": "string",
+        }
+    )
     response = await ac.get(
-        "/api/operations",
+        "/api/v1/operations",
+        headers={"accept": "application/json", "Authorization": f"Bearer {token.json()['access_token']}"},
         params={
             "operation_type": "Выплата купонов",
         },

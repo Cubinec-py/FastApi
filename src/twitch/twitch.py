@@ -1,21 +1,22 @@
 import os
 import re
-import twitchio
-import aiohttp
-import aioredis
-
-from twitchio.ext import commands, pubsub, routines
-from dotenv import load_dotenv
 from typing import List
 
+import aioredis
+import twitchio
+from dotenv import load_dotenv
+from twitchio.ext import commands, pubsub, routines
+
 from src.settings.settings import Settings
-from src.twitch.utils import get_answer, start_current_track, check_stream_or_not, get_track_title, get_track_length
+from src.twitch.utils import \
+    get_answer, start_current_track, check_stream_or_not, get_track_title, get_track_length, add_track_to_playlist
 
 load_dotenv()
 
-
 my_token = os.environ.get('TWITCH_CHANNEL_ACCESS_TOKEN')
-INIT_CHANNELS = ["cubinec2012"]
+reward_add_id = os.environ.get('TWITCH_REWARD_ADD_ID')
+reward_skip_id = os.environ.get('TWITCH_REWARD_SKIP_ID')
+INIT_CHANNELS = ['cubinec2012']
 users_oauth_token = os.environ.get('TWITCH_CHANNEL_ACCESS_TOKEN')
 users_channel_id = int(os.environ.get('USER_CHANNEL_ID'))
 client = twitchio.Client(token=my_token, client_secret=os.environ.get('TWITCH_CLIENT_SECRET'))
@@ -31,42 +32,6 @@ class Bot(commands.Bot):
             prefix="!",
             initial_channels=INIT_CHANNELS,
         )
-
-    @client.event()
-    async def event_pubsub_channel_points(event: pubsub.PubSubChannelPointsMessage):
-        channel = bot.get_channel('cubinec2012')
-        if event.reward.id == '398f81af-6d5b-4f78-b38d-f66246796867':
-            yt_regex_url = re.compile(r'^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$')
-            link = event.input
-            reward_redemptions_list = await event.reward.get_redemptions(token=users_oauth_token, status='UNFULFILLED')
-            if yt_regex_url.match(link):
-                url = f'{Settings.SERVER_URL}/api/v1/playlist'
-                data = {'track': link}
-                title = await get_track_title(link)
-                if await check_stream_or_not(link):
-                    await reward_redemptions_list[-1].refund(token=users_oauth_token)
-                    await channel.send(f'@{event.user.name} Только треки, не онлайн стримы!')
-                    return
-
-                if await get_track_length(link) > 300:
-                    await reward_redemptions_list[-1].refund(token=users_oauth_token)
-                    await channel.send(
-                        f'@{event.user.name} Трек {title} слишком длинный, не длинее 5 минут!'
-                    )
-                    return
-
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(url, json=data) as resp:
-                        await resp.text()
-                await reward_redemptions_list[-1].fulfill(token=users_oauth_token)
-                await channel.send(f'@{event.user.name} Трек {title} успешно добавлен в плейлист!')
-            else:
-                await reward_redemptions_list[-1].refund(token=users_oauth_token)
-                await channel.send(f'@{event.user.name} только youtube ссылки PixelBob')
-        elif event.reward.id == '6c5a880c-2b04-492f-8530-0551399181f8':
-            reward_redemptions_list = await event.reward.get_redemptions(token=users_oauth_token, status='UNFULFILLED')
-            await reward_redemptions_list[-1].fulfill(token=users_oauth_token)
-            await get_answer(event, channel, reward=True)
 
     @commands.command(name='скип')
     async def skip_track(self, ctx: commands.Context):
@@ -93,7 +58,7 @@ class Bot(commands.Bot):
             title = await get_track_title(track_url.decode('utf-8'))
             await ctx.channel.send(f'Текущий трек: {title}')
         else:
-            await ctx.channel.send(f'Сейчас ни один трек не воспроизводится!')
+            await ctx.channel.send('Сейчас ни один трек не воспроизводится!')
 
     @commands.command(name='старт')
     async def track_start(self, ctx: commands.Context):
@@ -102,11 +67,11 @@ class Bot(commands.Bot):
         else:
             await ctx.channel.send(f'@{ctx.author.name} У тебя нет прав PixelBob')
 
-    @routines.routine(minutes=10)
+    @routines.routine(minutes=15)
     async def info(self):
         channel = bot.get_channel('cubinec2012')
         await channel.send(
-            'За балы канала доступен заказ, скип треков! ' \
+            'За балы канала доступен заказ, скип треков! '
             'Так же, доступны команды: !трек, !скип в чате!'
         )
 
@@ -117,6 +82,40 @@ class Bot(commands.Bot):
 
 
 bot = Bot()
+
+
+@client.event()
+async def event_pubsub_channel_points(event: pubsub.PubSubChannelPointsMessage):
+    channel = bot.get_channel('cubinec2012')
+    if event.reward.id == reward_add_id:
+        yt_regex_url = re.compile(
+            r'^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$'
+        )
+        link = event.input
+        reward_redemptions_list = await event.reward.get_redemptions(token=users_oauth_token, status='UNFULFILLED')
+        if yt_regex_url.match(link):
+            title = await get_track_title(link)
+            if await check_stream_or_not(link):
+                await reward_redemptions_list[-1].refund(token=users_oauth_token)
+                await channel.send(f'@{event.user.name} Только треки, не онлайн стримы!')
+                return
+
+            if await get_track_length(link) > 300:
+                await reward_redemptions_list[-1].refund(token=users_oauth_token)
+                await channel.send(
+                    f'@{event.user.name} Трек {title} слишком длинный, не длинее 5 минут!'
+                )
+                return
+            await add_track_to_playlist(link)
+            await reward_redemptions_list[-1].fulfill(token=users_oauth_token)
+            await channel.send(f'@{event.user.name} Трек {title} успешно добавлен в плейлист!')
+        else:
+            await reward_redemptions_list[-1].refund(token=users_oauth_token)
+            await channel.send(f'@{event.user.name} только youtube ссылки PixelBob')
+    elif event.reward.id == reward_skip_id:
+        reward_redemptions_list = await event.reward.get_redemptions(token=users_oauth_token, status='UNFULFILLED')
+        await reward_redemptions_list[-1].fulfill(token=users_oauth_token)
+        await get_answer(event, channel, reward=True)
 
 
 async def main():

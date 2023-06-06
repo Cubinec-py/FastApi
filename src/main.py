@@ -1,6 +1,4 @@
-import asyncio
-
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
@@ -8,8 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from redis import asyncio as aioredis
 
-from src.auth.base_config import auth_backend, fastapi_users, current_active_user
-from src.auth.models import User
+from src.auth.base_config import auth_backend, fastapi_users
 from src.auth.schemas import UserRead, UserCreate, UserUpdate
 from src.operations.router import router as router_operation
 from src.tasks.router import router as router_task
@@ -17,12 +14,7 @@ from src.chat.router import router as router_chat
 from src.pages.router import router as router_page
 from src.playlist.router import router as router_playlist
 
-# from src.settings.loggers import get_logger, setup_logging
 from src.settings.settings import Settings
-# import logging
-#
-# logger = get_logger(name=__name__)
-# logger = logging.getLogger(name=__name__)
 
 app = FastAPI(
     debug=Settings.DEBUG,
@@ -40,23 +32,12 @@ app.add_middleware(
 )
 
 
-# @app.on_event(event_type="startup")
-# def enable_logging() -> None:
-#     setup_logging()
-#     logger.info(msg="Logging configuration completed.")
-#     logger.debug(msg="Logging configuration completed.")
-#     logger.warning(msg="Logging configuration completed.")
-
-
 @app.on_event(event_type="startup")
 async def startup():
     redis = aioredis.from_url(
         Settings.REDIS_URL, encoding="utf8", decode_responses=True
     )
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-    # logger.info(msg="Redis configuration completed.")
-    # logger.debug(msg="Redis configuration completed.")
-    # logger.warning(msg="Redis configuration completed.")
 
 
 API_PREFIX = "/api/v1"

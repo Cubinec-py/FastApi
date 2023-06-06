@@ -1,5 +1,5 @@
 """Config file for gunicorn application."""
-from src.settings.loggers import LOGGING_CONFIG
+# from src.settings.loggers import LOGGING_CONFIG
 from src.settings.settings import Settings
 
 bind = f"{Settings.HOST}:{Settings.PORT}"

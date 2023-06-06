@@ -17,9 +17,9 @@ async def test_add_role():
 
 def test_register():
     response = client.post(
-        "/api/auth/register",
+        "/api/v1/register",
         json={
-            "email": "string",
+            "email": "string@example.com",
             "password": "string",
             "is_active": True,
             "is_superuser": False,
@@ -30,3 +30,15 @@ def test_register():
     )
 
     assert response.status_code == 201
+
+
+async def test_login():
+    response = await client.post(
+        "/api/v1/login",
+        json={
+            "email": "string@example.com",
+            "password": "string",
+        },
+    )
+
+    assert response.status_code == 200

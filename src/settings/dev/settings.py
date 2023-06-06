@@ -6,8 +6,7 @@ from pydantic import BaseSettings, Extra, Field
 origins = [
     "http://80.92.206.218:8000/",
     "https://www.youtube.com/",
-    "http://govnokod.online:8000/",
-    "*"
+    "http://govnokod.online:8000/"
 ]
 
 
@@ -46,6 +45,7 @@ class Settings(BaseSettings):
     LOG_USE_COLORS: bool = Field(default=True)
     # Database settings
     DATABASE_URL: str = Field()
+    TST_DATABASE_URL: str = Field()
     # Redis settings
     REDIS_URL: str = Field()
     # Google mail SMTP settings

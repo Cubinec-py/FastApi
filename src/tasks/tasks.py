@@ -20,9 +20,10 @@ def send_mail(username: str):
 
 @celery.task
 def skip_track(video_url: str):
-    data = {"url": video_url}
+    headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
+    data = {'video_url': video_url}
     set_current_track(video_url)
-    req = requests.post(f"{Settings.SERVER_URL}/api/v1/playlist/song_add", params=data)
+    req = requests.post(f"{Settings.SERVER_URL}/api/v1/playlist/song_add", headers=headers, json=data)
     return print(req.json())
 
 

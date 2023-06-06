@@ -11,7 +11,8 @@ SETTINGS=Dev/Local(Need to change depending on what mode you want to start servi
 TWITCH_CHANNEL_ACCESS_TOKEN=Here need to put your user acces token(https://twitchtokengenerator.com)
 TWITCH_CLIENT_SECRET=Here need to put your app secret(https://dev.twitch.tv/console)
 USER_CHANNEL_ID=Here need to put your channel id(https://streamscharts.com/tools/convert-username)
-INIT_CHANNELS=[Here need to put list of channel names or just yout chanel name]
+TWITCH_REWARD_ADD_ID=Reward must be created by TwitchAPI
+TWITCH_REWARD_SKIP_ID=Reward must be created by TwitchAPI
 ```
 Create .env.dev file in source with environments:
 ```dotenv
@@ -73,8 +74,10 @@ PORT=Your server port
 SERVER_URL=http://Your server host:Your server port
 WS_URL=ws://Your server host:Your server port
 ```
-### Set upping
-First need to set up local environment:
+### Running Local
+To run project in local mode make SETTINGS=Local in .env.
+
+Then need to set up local environment:
 ```bash
 python3.10 -m venv .venv 
 ```
@@ -83,12 +86,25 @@ After set upping environment need to install requirements:
 pip install -U pip
 pip install -r requirements.txt
 ```
-### Running
-To run project in local mode:
+Migrate to set up local db:
+```bash
+alembic upgrade head
+```
+To start project use command:
 ```bash
 uvicorn src.main:app
 ```
-To run project in dev mode:
+### Running Dev
+To run project in dev mode make SETTINGS=Dev in .env.
+
+To start project use command:
 ```bash
 docker-compose up -d
 ```
+### Additional information
+To create Twitch reward use this: [TwitchAPI](https://dev.twitch.tv/docs/api/reference/#create-custom-rewards)
+
+In order to be video displayed in OBS add new browser and put there link http://YOUR_HOST:YOUR_PORT(Or just your domain name)/api/v1/playlist/player
+
+If some videos not available at startup, when you using it local or in dev and with ip address in host, need to change host name to any domain name, this is because YouTube do not pass addresses where host name is ip address.
+
