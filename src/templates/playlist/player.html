@@ -1,0 +1,127 @@
+<style>
+body {
+  background-color: green;
+}
+#playerContainer {
+  display: none;
+}
+</style>
+<script src="https://www.youtube.com/iframe_api"></script>
+<div id="playerContainer">
+  <div id="player"></div>
+</div>
+
+<script>
+  let player;
+  let socket = new WebSocket("{{ WS_URL }}/api/v1/playlist/ws");
+  let url = "{{ url_ended }}";
+  let videoEnded = false;
+  let MESSAGE_videoEnded = "video_ended";
+  let SKIP_TRACK = "skip_track";
+  const API_KEY = "{{ API_KEY }}";
+  const request= ()=>{
+    return fetch(
+      url,{
+        method:"POST",
+        headers:{
+          'Content-Type': 'application/json'
+        },
+        body:JSON.stringify({})
+      }
+    ).then(response=>response.json())
+    .catch(error=>{
+      console.error('Error:', error);
+    throw error;
+     })
+  }
+
+  function loadYouTubePlayerAPI() {
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+  }
+
+  loadYouTubePlayerAPI();
+
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player('player', {
+      height: '360',
+      width: '640',
+      videoId: "{{ video_id }}",
+      playerVars: {
+        'autoplay': 1,
+        'controls': 0,
+        'disablekb': 1,
+        'fs': 0,
+        'iv_load_policy': 3,
+        'loop': 1,
+        'rel': 0,
+        'showinfo': 0
+      },
+      events: {
+        'onReady': onPlayerReady,
+        'onStateChange': onPlayerStateChange
+      }
+    });
+  }
+  function onPlayerReady(event) {
+    event.target.setVolume(30);
+    event.target.playVideo();
+  }
+
+  function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.ENDED) {
+      videoEnded = true;
+      hidePlayer();
+      request();
+    }
+  }
+
+  function playNewVideo(videoId) {
+      if (videoEnded) {
+        videoEnded = false;
+        showPlayer();
+      }
+
+      if (player) {
+        player.loadVideoById(videoId);
+        videoEnded = false;
+        showPlayer();
+      } else {
+        loadYouTubePlayerAPI();
+        videoEnded = false;
+        showPlayer();
+      }
+  }
+
+  function hidePlayer() {
+    document.getElementById("playerContainer").style.display = "none";
+  }
+
+  function showPlayer() {
+    document.getElementById("playerContainer").style.display = "block";
+  }
+
+  socket.onmessage = function(event) {
+    if (event.data !== MESSAGE_videoEnded && event.data !== SKIP_TRACK) {
+      let newVideoId = event.data;
+      console.log(newVideoId);
+      if (newVideoId) {
+        playNewVideo(newVideoId);
+      }
+    } else if (event.data === SKIP_TRACK) {
+      console.log("skip track 123");
+      if (player) {
+        player.stopVideo();
+      }
+      hidePlayer();
+    }
+  };
+
+  const metaTag = document.createElement('meta');
+  metaTag.setAttribute('http-equiv', 'Content-Security-Policy');
+  metaTag.setAttribute('content', `default-src 'self' https://www.youtube.com https://www.googleapis.com 'unsafe-inline';`);
+  document.head.appendChild(metaTag);
+
+</script>

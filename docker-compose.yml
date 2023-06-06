@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  app: &app
+    container_name: fastapi_app
+    restart: on-failure
+    command: ["docker/app.sh"]
+    networks:
+      - fastapi_app_network
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    depends_on:
+      - db_app
+    volumes:
+      - .:/fastapi_app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.dev
+
+  db_app:
+    container_name: db_app
+    image: postgres:15.2-alpine
+    networks:
+      - fastapi_app_network
+    volumes:
+      - db_app:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env.dev
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    networks:
+      - fastapi_app_network
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    env_file:
+      - .env.dev
+    ports:
+      - "5050:80"
+
+  redis:
+    container_name: redis
+    image: redis:7.2-rc1-alpine
+    restart: on-failure
+    networks:
+      - fastapi_app_network
+    expose:
+      - 6379
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-h", "app", "ping" ]
+
+  twitch:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: twitch
+    restart: always
+    networks:
+      - fastapi_app_network
+    depends_on:
+      - db_app
+    command: python3 src/twitch/twitch.py
+    volumes:
+      - .:/fastapi_app
+    ports:
+      - "6666:6666"
+
+  celery:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: celery
+    restart: always
+    networks:
+      - fastapi_app_network
+    volumes:
+      - .:/fastapi_app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    env_file:
+      - .env.dev
+    depends_on:
+      - redis
+      - flower
+      - db_app
+      - app
+    command: ["docker/parametrs.sh"]
+    healthcheck:
+      test: [ "CMD-SHELL", "ps ax", "|" ,"grep -v grep", "|" ,"grep celery",  "||", "exit 1" ]
+      interval: 1m
+      timeout: 5s
+      retries: 2
+
+  flower:
+    image: mher/flower:latest
+    container_name: flower
+    networks:
+      - fastapi_app_network
+    depends_on:
+      - redis
+    ports:
+      - "5566:5566"
+    volumes:
+      - .:/fastapi_app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - FLOWER_PORT=5566
+
+volumes:
+  db_app:
+  pgadmin:
+  redis:
+
+networks:
+  fastapi_app_network:
